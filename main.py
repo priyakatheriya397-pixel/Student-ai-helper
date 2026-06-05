@@ -81,6 +81,28 @@ def read_root(): return html_content
 def ask_ai_endpoint(q: str, request: Request):
     user_ip = request.client.host
     
+    # 🕵️ Maalik ko free access (VIP bypass)
+    if user_ip == "127.0.0.1" or user_ip.startswith("10.") or "render" in request.headers.get("user-agent", "").lower():
+        try:
+            response = client.chat.completions.create(
+                model="google/gemma-2-9b-it:free",
+                messages=[
+                    {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein dein. Step-by-step samjhayein."},
+                    {"role": "user", "content": q}
+                ]
+            )
+            
+            if hasattr(response, 'choices') and len(response.choices) > 0:
+                ai_response = response.choices.message.content
+            elif isinstance(response, str):
+                ai_response = response
+            else:
+                ai_response = str(response)
+                
+            return {"status": "success", "remaining": "Unlimited 👑", "message": ai_response}
+        except Exception:
+            pass
+
     if user_ip not in user_sessions:
         user_sessions[user_ip] = 0
         
@@ -103,7 +125,6 @@ def ask_ai_endpoint(q: str, request: Request):
             ]
         )
         
-        # 🛠️ यहाँ एरर को 100% फिक्स कर दिया गया है (Safe String Checker)
         if hasattr(response, 'choices') and len(response.choices) > 0:
             ai_response = response.choices.message.content
         elif isinstance(response, str):
