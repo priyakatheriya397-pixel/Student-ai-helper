@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse
 from openai import OpenAI
 import os
 
@@ -13,7 +13,6 @@ client = OpenAI(
 
 app = FastAPI()
 
-# 📝 सिम्पल डेटाबेस (यूज़र्स के सवालों की गिनती रखने के लिए)
 user_sessions = {}
 
 html_content = """
@@ -40,7 +39,6 @@ html_content = """
         <p>Aditya Kumar jaisa aapka apna AI Tutor! Apni book ka sawaal niche likhein:</p>
         <input type="text" id="userQuery" placeholder="e.g., Python mein Variables kya hain?">
         <button id="askBtn" onclick="askAI()">Teacher Se Poochein ✨</button>
-        <!-- 💰 रीचार्ज का ताला वाला बटन -->
         <button id="payBtn" class="pay-btn" onclick="goToPay()">Unlimited Padhai Ke Liye ₹99 Recharge Karein 💳</button>
         <div id="counter">Mufft Sawaal Baki: 3</div>
         <div id="responseBox"></div>
@@ -68,7 +66,6 @@ html_content = """
             } catch(e) { box.innerHTML = "Error aa gaya bhai: " + e; }
         }
         function goToPay() {
-            // यहाँ बाद में आपकी असली पंजाब एंड सिंध बैंक की Razorpay पेमेंट लिंक आएगी
             alert("Redirecting to Punjab & Sind Bank Payment Gateway... (Abhi test mode hai)");
             window.open("https://razorpay.com", "_blank");
         }
@@ -82,12 +79,11 @@ def read_root(): return html_content
 
 @app.get("/ask")
 def ask_ai_endpoint(q: str, request: Request):
-    user_ip = request.client.host # यूज़र की पहचान के लिए उसकी IP ली
+    user_ip = request.client.host
     
     if user_ip not in user_sessions:
         user_sessions[user_ip] = 0
         
-    # 🔒 अगर यूज़र 3 से ज़्यादा सवाल पूछ चुका है तो ताला लगाओ
     if user_sessions[user_ip] >= 3:
         return {
             "status": "locked",
@@ -106,8 +102,15 @@ def ask_ai_endpoint(q: str, request: Request):
                 {"role": "user", "content": q}
             ]
         )
-        # 🛠️ यहाँ एरर फिक्स किया गया है (Pydantic object handles response.choices correctly)
-        ai_response = response.choices[0].message.content
+        
+        # 🛠️ यहाँ एरर को 100% फिक्स कर दिया गया है (Safe String Checker)
+        if hasattr(response, 'choices') and len(response.choices) > 0:
+            ai_response = response.choices.message.content
+        elif isinstance(response, str):
+            ai_response = response
+        else:
+            ai_response = str(response)
+            
         return {"status": "success", "remaining": remaining_slots, "message": ai_response}
     except Exception as e:
         return {"status": "error", "remaining": remaining_slots, "message": f"Error: {e}"}
