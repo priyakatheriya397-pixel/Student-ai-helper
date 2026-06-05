@@ -81,11 +81,11 @@ def read_root(): return html_content
 def ask_ai_endpoint(q: str, request: Request):
     user_ip = request.client.host
     
-    # 🕵️ Maalik ko free access (VIP bypass)
+    # 🕵️ मालिक को फ्री एक्सेस (VIP बाईपास) - यहाँ नया मॉडल डाल दिया है
     if user_ip == "127.0.0.1" or user_ip.startswith("10.") or "render" in request.headers.get("user-agent", "").lower():
         try:
             response = client.chat.completions.create(
-                model="google/gemma-2-9b-it:free",
+                model="meta-llama/llama-3-8b-instruct:free",
                 messages=[
                     {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein dein. Step-by-step samjhayein."},
                     {"role": "user", "content": q}
@@ -118,7 +118,7 @@ def ask_ai_endpoint(q: str, request: Request):
     
     try:
         response = client.chat.completions.create(
-            model="google/gemma-2-9b-it:free",
+            model="meta-llama/llama-3-8b-instruct:free", # यहाँ भी नया मॉडल डाल दिया है
             messages=[
                 {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein dein. Step-by-step samjhayein."},
                 {"role": "user", "content": q}
@@ -139,4 +139,4 @@ def ask_ai_endpoint(q: str, request: Request):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-    
+                
