@@ -1,7 +1,8 @@
 import uvicorn
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from openai import OpenAI
+import os
 
 MY_FREE_KEY = "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"
 
@@ -11,6 +12,9 @@ client = OpenAI(
 )
 
 app = FastAPI()
+
+# 📝 सिम्पल डेटाबेस (यूज़र्स के सवालों की गिनती रखने के लिए)
+user_sessions = {}
 
 html_content = """
 <!DOCTYPE html>
@@ -24,8 +28,10 @@ html_content = """
         h1 { color: #2c3e50; font-size: 24px; }
         p { color: #7f8c8d; }
         input[type="text"] { width: 90%; padding: 12px; margin: 15px 0; border: 2px solid #bdc3c7; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
-        button { background-color: #3498db; color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        button { background-color: #3498db; color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; }
+        .pay-btn { background-color: #2ecc71; display: none; }
         #responseBox { margin-top: 20px; text-align: left; background: #eef2f3; padding: 15px; border-radius: 6px; display: none; font-size: 15px; line-height: 1.5; color: #333; }
+        #counter { color: #e74c3c; font-weight: bold; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -33,7 +39,10 @@ html_content = """
         <h1>🚀 Smart Student Helper AI</h1>
         <p>Aditya Kumar jaisa aapka apna AI Tutor! Apni book ka sawaal niche likhein:</p>
         <input type="text" id="userQuery" placeholder="e.g., Python mein Variables kya hain?">
-        <button onclick="askAI()">Teacher Se Poochein ✨</button>
+        <button id="askBtn" onclick="askAI()">Teacher Se Poochein ✨</button>
+        <!-- 💰 रीचार्ज का ताला वाला बटन -->
+        <button id="payBtn" class="pay-btn" onclick="goToPay()">Unlimited Padhai Ke Liye ₹99 Recharge Karein 💳</button>
+        <div id="counter">Mufft Sawaal Baki: 3</div>
         <div id="responseBox"></div>
     </div>
     <script>
@@ -45,9 +54,23 @@ html_content = """
             box.innerHTML = "<b>Teacher soch rahe hain... Please wait! 🤔</b>";
             try {
                 let res = await fetch('/ask?q=' + encodeURIComponent(query));
-                let data = await res.text();
-                box.innerHTML = "<b>📚 Teacher Ka Jawaab:</b><br><br>" + data.replace(/\\\\n/g, '<br>');
+                let data = await res.json();
+                
+                document.getElementById("counter").innerHTML = "Mufft Sawaal Baki: " + data.remaining;
+                
+                if (data.status === "locked") {
+                    box.innerHTML = "<b>🔒 Aapki Free Limit Khatam!</b><br><br>" + data.message;
+                    document.getElementById("askBtn").style.display = "none";
+                    document.getElementById("payBtn").style.display = "block";
+                } else {
+                    box.innerHTML = "<b>📚 Teacher Ka Jawaab:</b><br><br>" + data.message;
+                }
             } catch(e) { box.innerHTML = "Error aa gaya bhai: " + e; }
+        }
+        function goToPay() {
+            // यहाँ बाद में आपकी असली पंजाब एंड सिंध बैंक की Razorpay पेमेंट लिंक आएगी
+            alert("Redirecting to Punjab & Sind Bank Payment Gateway... (Abhi test mode hai)");
+            window.open("https://razorpay.com", "_blank");
         }
     </script>
 </body>
@@ -58,7 +81,23 @@ html_content = """
 def read_root(): return html_content
 
 @app.get("/ask")
-def ask_ai_endpoint(q: str):
+def ask_ai_endpoint(q: str, request: Request):
+    user_ip = request.client.host # यूज़र की पहचान के लिए उसकी IP ली
+    
+    if user_ip not in user_sessions:
+        user_sessions[user_ip] = 0
+        
+    # 🔒 अगर यूज़र 3 से ज़्यादा सवाल पूछ चुका है तो ताला लगाओ
+    if user_sessions[user_ip] >= 3:
+        return {
+            "status": "locked",
+            "remaining": 0,
+            "message": "Aapne aaj ke 3 free sawaal pooch liye hain. Aage padhne ke liye niche diye gaye button se ₹99 ka recharge karein."
+        }
+        
+    user_sessions[user_ip] += 1
+    remaining_slots = 3 - user_sessions[user_ip]
+    
     try:
         response = client.chat.completions.create(
             model="google/gemma-2-9b-it:free",
@@ -67,11 +106,13 @@ def ask_ai_endpoint(q: str):
                 {"role": "user", "content": q}
             ]
         )
-        return response.choices.message.content
-    except Exception as e: return f"Error: {e}"
+        # 🛠️ यहाँ एरर फिक्स किया गया है (Pydantic object handles response.choices correctly)
+        ai_response = response.choices[0].message.content
+        return {"status": "success", "remaining": remaining_slots, "message": ai_response}
+    except Exception as e:
+        return {"status": "error", "remaining": remaining_slots, "message": f"Error: {e}"}
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-  
+    
