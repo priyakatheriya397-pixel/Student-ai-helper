@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from openai import OpenAI
 import os
 
-MY_FREE_KEY = "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"
+MY_FREE_KEY = "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"
 
 client = OpenAI(
     base_url="https://openrouter.ai",
@@ -15,7 +15,6 @@ app = FastAPI()
 
 user_sessions = {}
 
-# --- 💬 व्हाट्सएप्प जैसी सुंदर चैट स्क्रीन का डिज़ाइन ---
 html_content = """
 <!DOCTYPE html>
 <html>
@@ -35,7 +34,6 @@ html_content = """
         .input-area { background: #f0f2f5; padding: 10px; display: flex; gap: 10px; align-items: center; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
         input[type="text"] { flex: 1; padding: 12px; border: none; border-radius: 20px; font-size: 16px; outline: none; background: white; }
         button { background: #00a884; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #008f72; }
         .pay-btn { background: #e74c3c; width: 90%; align-self: center; margin: 10px 0; border-radius: 10px; display: none; text-align: center; text-decoration: none; font-weight: bold; color: white; padding: 12px; }
     </style>
 </head>
@@ -46,7 +44,6 @@ html_content = """
             <span id="counter">Mufft Sawaal Baki: 3</span>
         </div>
         
-        <!-- 💬 यहाँ सारे मैसेज एक के नीचे एक आएंगे -->
         <div class="chat-box" id="chatBox">
             <div class="message bot-msg"><b>📚 Teacher:</b> Hello Pratik bhai! Aaj aap apni book ka kaun sa sawaal seekhna chahte hain? Poochhiye! ✨</div>
         </div>
@@ -68,12 +65,10 @@ html_content = """
             let chatBox = document.getElementById("chatBox");
             if(!query.trim()) return;
 
-            // 1. User ka message screen par joddna
             chatBox.innerHTML += `<div class="message user-msg">${query}</div>`;
             input.value = "";
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // 2. Waiting message dikhana
             let waitingId = "wait_" + Date.now();
             chatBox.innerHTML += `<div class="message bot-msg" id="${waitingId}"><b>🤔 Teacher soch rahe hain...</b></div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -83,14 +78,14 @@ html_content = """
                 let data = await res.json();
                 
                 document.getElementById("counter").innerHTML = "Mufft Sawaal Baki: " + data.remaining;
-                document.getElementById(waitingId).remove(); // Waiting hatao
+                document.getElementById(waitingId).remove();
 
                 if (data.status === "locked") {
                     chatBox.innerHTML += `<div class="message system-msg"><b>🔒 Aapki Free Limit Khatam!</b><br>${data.message}</div>`;
                     document.getElementById("inputArea").style.display = "none";
                     document.getElementById("payBtn").style.display = "block";
                 } else {
-                    chatBox.innerHTML += `<div class="message bot-msg"><b>📚 Teacher:</b><br>${data.message.replace(/\\n/g, '<br>')}</div>`;
+                    chatBox.innerHTML += `<div class="message bot-msg"><b>📚 Teacher:</b><br>${data.message}</div>`;
                 }
                 chatBox.scrollTop = chatBox.scrollHeight;
             } catch(e) { 
@@ -106,8 +101,10 @@ html_content = """
 </html>
 """
 
-@app.get("/")
-def read_root(): return html_content
+# 🛠️ यहाँ हमने 'response_class=HTMLResponse' जोड़कर ब्राउज़र का एरर 100% फिक्स कर दिया है
+@app.get("/", response_class=HTMLResponse)
+def read_root(): 
+    return html_content
 
 @app.get("/ask")
 def ask_ai_endpoint(q: str, request: Request):
