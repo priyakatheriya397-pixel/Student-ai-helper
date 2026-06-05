@@ -3,7 +3,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import os
 
-# 🚀 प्रतीक भाई की असली गूगल चाबी बिल्कुल सुरक्षित है
 os.environ["GEMINI_API_KEY"] = "AIzaSy" + "D-aLd31df5c4ba8c700fd30d7097908820e4785"
 
 from google import genai
@@ -131,27 +130,18 @@ def ask_ai_endpoint(q: str, request: Request):
         remaining_slots = "Unlimited 👑"
 
     try:
-        # 🛠️ यहाँ गूगल की न्यू लाइब्रेरी का बिल्कुल सही रिस्पॉन्स हैंडलर लगाया गया है
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents="Aap ek expert school teacher hain jo ek pyaari cat ke roop mein bacho ko padhati hain. Har jawaab simple Hindi mein dein. Step-by-step points mein samjhayein: " + q.replace("12306", "").replace("admin", "")
+            contents="Aap ek expert school teacher hain jo ek pyaari cat ke roop mein bacho ko padhati hain. Har jawaab simple Hindi mein edin. Step-by-step points mein samjhayein: " + q.replace("12306", "")
         )
-        
-        # पक्का और सीधा तरीका जवाब निकालने का
         actual_text = response.text if hasattr(response, 'text') else str(response)
         return {"status": "success", "remaining": remaining_slots, "message": actual_text}
         
     except Exception as e:
-        # बैकअप में भी असली लंबा जवाब सेट किया ताकि एरर कभी आ ही न सके
-        clean_q = q.replace("12306", "").replace("admin", "").strip()
-        if "bacteria" in clean_q.lower():
-            answer = "Bacteria (जीवाणु) बहुत छोटे, एक कोशिका वाले जीव होते हैं जिन्हें हम खुली आँखों से नहीं देख सकते। ये हर जगह पाए जाते हैं - हवा में, पानी में, मिट्टी में और हमारे शरीर के अंदर भी। कुछ बैक्टीरिया बीमारी फैलाते हैं (जैसे टाइफाइड), लेकिन बहुत से बैक्टीरिया हमारे लिए फायदेमंद भी होते हैं, जैसे दूध से दही जमाने वाला बैक्टीरिया!"
-        else:
-            answer = f"Pratik bhai, aapne '{clean_q}' pucha hai. Main ek expert AI cat teacher hoon. AI ke naye server se aapka jawab perfectly load ho chuka hai!"
-            
-        return {"status": "success", "remaining": remaining_slots, "message": answer}
+        # अगर कभी गूगल का सर्वर धीमा भी हो, तो यह सीधे सवाल का लाइव रिस्पॉन्स दोबारा ट्राई करने को कहेगा, पुराना जवाब कभी नहीं दोहराएगा!
+        return {"status": "success", "remaining": remaining_slots, "message": f"Meow! Pratik bhai, aapne '{q.replace('12306', '')}' pucha hai. AI server thoda busy hai, ek baar dobara Bhejein button dabayein!"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-    
+        
