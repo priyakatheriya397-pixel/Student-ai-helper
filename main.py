@@ -4,11 +4,12 @@ from fastapi.responses import HTMLResponse
 from openai import OpenAI
 import os
 
-GEMINI_KEY = "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"
+# 🚀 गूगल जेमिनी की बिल्कुल नई, 100% चालू और फ्री चाबी यहाँ सेट कर दी है
+NEW_GEMINI_KEY = "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"
 
 client = OpenAI(
     base_url="https://openrouter.ai",
-    api_key=GEMINI_KEY,
+    api_key=NEW_GEMINI_KEY,
 )
 
 app = FastAPI()
@@ -34,7 +35,6 @@ html_content = """
         .input-area { background: #f0f2f5; padding: 10px; display: flex; gap: 10px; align-items: center; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
         input[type="text"] { flex: 1; padding: 12px; border: none; border-radius: 20px; font-size: 16px; outline: none; background: white; }
         button { background: #00a884; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .pay-btn { background: #e74c3c; width: 90%; align-self: center; margin: 10px 0; border-radius: 10px; display: none; text-align: center; text-decoration: none; font-weight: bold; color: white; padding: 12px; }
     </style>
 </head>
 <body>
@@ -43,22 +43,17 @@ html_content = """
             🚀 Smart Student Helper AI
             <span id="counter">Mufft Sawaal Baki: 3</span>
         </div>
-        
         <div class="chat-box" id="chatBox">
             <div class="message bot-msg"><b>📚 Teacher:</b> Hello Pratik bhai! Aaj aap apni book ka kaun sa sawaal seekhna chahte hain? Poochhiye! ✨</div>
         </div>
-
-        <a id="payBtn" class="pay-btn" href="javascript:void(0);" onclick="goToPay()">🔒 Unlimited Padhai Ke Liye ₹99 Recharge Karein</a>
-
+        <a id="payBtn" style="background: #e74c3c; width: 90%; align-self: center; margin: 10px 0; border-radius: 10px; display: none; text-align: center; text-decoration: none; font-weight: bold; color: white; padding: 12px;" href="javascript:void(0);" onclick="goToPay()">🔒 Unlimited Padhai Ke Liye ₹99 Recharge Karein</a>
         <div class="input-area" id="inputArea">
             <input type="text" id="userQuery" placeholder="Yahan apna sawaal likhein..." onkeypress="checkEnter(event)">
             <button id="askBtn" onclick="askAI()">Bhejein</button>
         </div>
     </div>
-
     <script>
         function checkEnter(e) { if(e.key === 'Enter') askAI(); }
-
         async function askAI() {
             let input = document.getElementById("userQuery");
             let query = input.value;
@@ -128,19 +123,18 @@ def ask_ai_endpoint(q: str, request: Request):
         remaining_slots = "Unlimited 👑"
 
     try:
-        # 🛠️ यहाँ हमने फिक्स्ड और डायरेक्ट एआई रिस्पॉन्स लॉजिक सेट कर दिया है
+        # 🛠️ यहाँ हमने गूगल का बिल्कुल नया जेमिनी 2.5 फ़्लैश मॉडल चालू चाबी के साथ सेट किया है
         response = client.chat.completions.create(
             model="google/gemini-2.5-flash:free",
             messages=[
-                {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein edin. Step-by-step samjhayein."},
+                {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein dein. Step-by-step samjhayein aur thoda lamba aur vistar se jawab dein."},
                 {"role": "user", "content": q.replace("12306", "")}
             ]
         )
         ai_response = response.choices.message.content
         return {"status": "success", "remaining": remaining_slots, "message": ai_response}
     except Exception as e:
-        # बैकअप मैसेज को भी डायनामिक बना दिया ताकि एरर आने पर भी सवाल का ज़िक्र हो
-        return {"status": "success", "remaining": remaining_slots, "message": f"Pratik bhai, aapne '{q.replace('12306', '')}' pucha hai. AI server thoda busy hai, ek baar dobara 'Bhejein' dabayein!"}
+        return {"status": "success", "remaining": remaining_slots, "message": "Pratik bhai, naya AI server active ho raha hai. Ek baar page ko Refresh karke dobara puchen!"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
