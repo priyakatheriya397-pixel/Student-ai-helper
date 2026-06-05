@@ -4,11 +4,11 @@ from fastapi.responses import HTMLResponse
 from openai import OpenAI
 import os
 
-MY_FREE_KEY = "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"
+GEMINI_KEY = "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"
 
 client = OpenAI(
     base_url="https://openrouter.ai",
-    api_key=MY_FREE_KEY,
+    api_key=GEMINI_KEY,
 )
 
 app = FastAPI()
@@ -85,7 +85,7 @@ html_content = """
                     document.getElementById("inputArea").style.display = "none";
                     document.getElementById("payBtn").style.display = "block";
                 } else {
-                    chatBox.innerHTML += `<div class="message bot-msg"><b>📚 Teacher:</b><br>${data.message}</div>`;
+                    chatBox.innerHTML += `<div class="message bot-msg"><b>📚 Teacher:</b><br>${data.message.replace(/\\n/g, '<br>')}</div>`;
                 }
                 chatBox.scrollTop = chatBox.scrollHeight;
             } catch(e) { 
@@ -101,10 +101,8 @@ html_content = """
 </html>
 """
 
-# 🛠️ यहाँ हमने 'response_class=HTMLResponse' जोड़कर ब्राउज़र का एरर 100% फिक्स कर दिया है
 @app.get("/", response_class=HTMLResponse)
-def read_root(): 
-    return html_content
+def read_root(): return html_content
 
 @app.get("/ask")
 def ask_ai_endpoint(q: str, request: Request):
@@ -130,20 +128,21 @@ def ask_ai_endpoint(q: str, request: Request):
         remaining_slots = "Unlimited 👑"
 
     try:
+        # 🛠️ यहाँ हमने फिक्स्ड और डायरेक्ट एआई रिस्पॉन्स लॉजिक सेट कर दिया है
         response = client.chat.completions.create(
             model="google/gemini-2.5-flash:free",
             messages=[
-                {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein edin. Step-by-step samjhayein aur kitchen ke dabbe ka badhiya example zaroor dein."},
+                {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein edin. Step-by-step samjhayein."},
                 {"role": "user", "content": q.replace("12306", "")}
             ]
         )
         ai_response = response.choices.message.content
         return {"status": "success", "remaining": remaining_slots, "message": ai_response}
     except Exception as e:
-        long_perfect_answer = "Python mein Variables ek tarah ke Containers ya Dabbe hote hain, jinke andar hum apna data store karte hain. Jaise kitchen mein namak ke liye alag dabba aur cheeni ke liye alag dabba hota hai, thik waise hi computer mein data store karne ke liye variable hote hain. Udaharan: naam = 'Pratik' aur umar = 18."
-        return {"status": "success", "remaining": remaining_slots, "message": long_perfect_answer}
+        # बैकअप मैसेज को भी डायनामिक बना दिया ताकि एरर आने पर भी सवाल का ज़िक्र हो
+        return {"status": "success", "remaining": remaining_slots, "message": f"Pratik bhai, aapne '{q.replace('12306', '')}' pucha hai. AI server thoda busy hai, ek baar dobara 'Bhejein' dabayein!"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-                
+    
