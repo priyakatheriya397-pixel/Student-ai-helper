@@ -4,7 +4,8 @@ from fastapi.responses import HTMLResponse
 from openai import OpenAI
 import os
 
-MY_FREE_KEY = "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"
+# 🔑 प्रतीक भाई की बिल्कुल नई और फ्रेश API Key यहाँ सेट कर दी है
+MY_FREE_KEY = "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"
 
 client = OpenAI(
     base_url="https://openrouter.ai",
@@ -108,14 +109,14 @@ def ask_ai_endpoint(q: str, request: Request):
             model="meta-llama/llama-3-8b-instruct:free",
             messages=[
                 {"role": "system", "content": "Aap ek expert school teacher hain. Har jawaab simple Hindi mein dein. Step-by-step samjhayein."},
-                {"role": "user", "content": q.replace("12306", "")} # पासवर्ड हटाकर असली सवाल AI को भेजेंगे
+                {"role": "user", "content": q.replace("12306", "")}
             ]
         )
         
         if hasattr(response, 'choices') and len(response.choices) > 0:
             ai_response = response.choices.message.content
-        elif isinstance(response, str):
-            ai_response = response
+        elif hasattr(response, 'content'):
+            ai_response = response.content
         else:
             ai_response = str(response)
             
