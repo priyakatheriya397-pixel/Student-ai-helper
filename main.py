@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -300,7 +301,7 @@ async def read_root():
         <!-- टॉप सर्च/लोडिंग लाइन -->
         <div id="top-loading-bar"></div>
 
-        <!-- पहला पेज (होम स्क्रीन विथ न्यू लोगो एंड नाम) -->
+        <!-- पहला पेज (होम स्क्रीन) -->
         <div id="home-page" class="page">
             <div class="brand-header">
                 <span class="brand-logo">🤖</span>
