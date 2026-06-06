@@ -1,8 +1,6 @@
 import os
 from flask import Flask, render_template_string, request, jsonify
-
 app = Flask(__name__)
-
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
