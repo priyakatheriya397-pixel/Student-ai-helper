@@ -4,7 +4,6 @@ from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# 🌌 ऑल-इन-वन सुंदर पर्पल डिज़ाइन + 3 ऑप्शंस + असली AI जवाब + मालिक पासवर्ड लॉजिक
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -135,7 +134,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         input.value = "";
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // अगर यूजर प्रीमियम नहीं है (और न ही मालिक है), तो वह सिर्फ 1 फ्री सवाल पूछ सकता है, उसके बाद ब्लॉक
         if (!isPremiumUser) {
             setTimeout(() => {
                 chatBox.innerHTML += `<div class="message bot">⚠️ <b>Premium Required:</b> To view the complete verified answer for "${text}", please subscribe to our <b>Premium Plan</b> or log in as Owner! 💎</div>`;
@@ -144,7 +142,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             return;
         }
 
-        // प्रीमियम यूजर या मालिक के लिए असली AI जवाब (Backend Fetch)
         chatBox.innerHTML += `<div class="message bot" id="loading-msg">🤖 AI is thinking...</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -156,10 +153,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             });
             let data = await response.json();
             
-            document.getElementById("loading-msg").remove();
+            let loadingEl = document.getElementById("loading-msg");
+            if(loadingEl) loadingEl.remove();
+            
             chatBox.innerHTML += `<div class="message bot" style="border-left: 4px solid var(--success-green);">✨ <b>[PREMIUM ANSWER]</b><br>${data.answer}</div>`;
         } catch (err) {
-            document.getElementById("loading-msg").remove();
+            let loadingEl = document.getElementById("loading-msg");
+            if(loadingEl) loadingEl.remove();
             chatBox.innerHTML += `<div class="message bot">❌ Server Busy. Please try again!</div>`;
         }
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -184,3 +184,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 </script>
 </body>
+</html>"""
+
+@app.route('/')
+def home():
+    return render_template_string(HTML_TEMPLATE)
+
+@app.route('/api/chat', methods=['POST'])
