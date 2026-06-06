@@ -1,71 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free AI & Learning Tools</title>
-    <link href="https://googleapis.com" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #f8f9fa; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-        header { width: 100%; max-width: 600px; text-align: center; margin-top: 20px; margin-bottom: 40px; }
-        header h1 { font-size: 24px; color: #4a148c; font-weight: 700; margin-bottom: 8px; }
-        header p { font-size: 14px; color: #666; }
-        .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 600px; margin-bottom: 30px; }
-        .tool-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .tool-card:hover { transform: translateY(-4px); border-color: #7c4dff; box-shadow: 0 8px 16px rgba(124, 77, 255, 0.1); }
-        .tool-icon { font-size: 32px; margin-bottom: 12px; display: inline-block; }
-        .tool-name { font-size: 14px; font-weight: 600; color: #424242; }
-        .workspace-container { width: 100%; max-width: 600px; background: #ffffff; border-radius: 16px; border: 1px solid #e0e0e0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
-        .welcome-text { background-color: #f3e5f5; color: #4a148c; padding: 15px; border-radius: 10px; font-size: 14px; line-height: 1.5; margin-bottom: 25px; font-weight: 500; text-align: center; }
-        .input-group { display: flex; gap: 10px; }
-        .question-input { flex: 1; padding: 14px 18px; border: 1px solid #cccccc; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; }
-        .question-input:focus { border-color: #7c4dff; }
-        .ask-btn { background-color: #7c4dff; color: white; border: none; padding: 0 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .ask-btn:hover { background-color: #651fff; }
-        @media (max-width: 480px) { .tools-grid { grid-template-columns: 1fr; } .input-group { flex-direction: column; } .ask-btn { padding: 14px; } }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Smart Study Workspace</h1>
-        <p>Learn Web Design, Edit Videos, and Ask AI anything for Free</p>
-    </header>
-    <div class="tools-grid">
-        <div class="tool-card" onclick="selectTool('Web Design')">
-            <span class="tool-icon">💻</span>
-            <div class="tool-name">Web Design</div>
-        </div>
-        <div class="tool-card" onclick="selectTool('Video Editor')">
-            <span class="tool-icon">🎬</span>
-            <div class="tool-name">Video Editor</div>
-        </div>
-        <div class="tool-card" onclick="selectTool('AI Tutor')">
-            <span class="tool-icon">🤖</span>
-            <div class="tool-name">AI Tutor</div>
-        </div>
-    </div>
-    <div class="workspace-container">
-        <div class="welcome-text" id="welcomeMessage">
-            👋 Welcome! Please click on any option above or type your homework question below! 🚀
-        </div>
-        <div class="input-group">
-            <input type="text" class="question-input" id="userInput" placeholder="Type your question here...">
-            <button class="ask-btn" onclick="submitQuestion()">Ask AI</button>
-        </div>
-    </div>
-    <script>
-        function selectTool(toolName) {
-            const messageBox = document.getElementById('welcomeMessage');
-            messageBox.innerHTML = `🎯 You have selected <b>${toolName}</b>. Type your topic or requirement below to start!`;
-            document.getElementById('userInput').placeholder = `Ask about ${toolName}...`;
-        }
-        function submitQuestion() {
-            const inputVal = document.getElementById('userInput').value;
-            if(inputVal.trim() === "") { alert("Please enter a question first!"); return; }
-            alert("Your question: '" + inputVal + "' has been submitted to AI Backend!");
-            document.getElementById('userInput').value = "";
-        }
-    </script>
-</body>
-</html>
+from flask import Flask, send_from_directory, jsonify, request, abort
+import os
+import sys
+
+# 1. फ्लैस्क ऐप और स्टैटिक फाइल्स कॉन्फ़िगरेशन
+app = Flask(__name__, static_folder='.', static_url_path='')
+
+# रेंडर का एनवायरनमेंट पोर्ट (या लोकल टेस्टिंग के लिए 3000)
+PORT = int(os.environ.get('PORT', 3000))
+
+# 2. मुख्य होमपेज रूट (यह आपकी index.html को लोड करेगा)
+@app.route('/')
+def home():
+    try:
+        # जांचें कि क्या index.html फ़ाइल उसी फ़ोल्डर में मौजूद है
+        if not os.path.exists('index.html'):
+            print("[ERROR] index.html file not found in the root directory!", file=sys.stderr)
+            return "<h1>Error: index.html missing!</h1><p>Please upload your frontend design file.</p>", 404
+            
+        print("[SUCCESS] Serving index.html to the user.")
+        return send_from_directory('.', 'index.html')
+    except Exception as e:
+        print(f"[CRITICAL] Failed to serve home page: {str(e)}", file=sys.stderr)
+        return jsonify({"success": False, "error": "Internal Server Error"}), 500
+
+# 3. एआई ट्यूटर/होमवर्क सबमिशन के लिए एक मजबूत API एंडपॉइंट
+@app.route('/api/ask', methods=['POST'])
+def ask_ai():
+    try:
+        # यूजर से आने वाले JSON डेटा को सुरक्षित रूप से पढ़ें
+        data = request.get_json(silent=True) or {}
+        question = data.get('question', '')
+        tool = data.get('tool', 'General')
+        
+        # इनपुट वैलिडेशन (खाली सवाल रोकने के लिए)
+        if not question or question.strip() == "":
+            return jsonify({
+                "success": False, 
+                "message": "Question cannot be empty! Please type something."
+            }), 400
+            
+        # सर्वर लॉग्स में डेटा प्रिंट करें (रेंडर डैशबोर्ड पर दिखेगा)
+        print(f"[AI REQUEST] Tool Selected: {tool} | Question Submitted: {question}")
+        
+        # अभी के लिए एक सफल रिस्पॉन्स भेजें (बाद में यहाँ असली AI API जोड़ सकते हैं)
+        return jsonify({
+            "success": True,
+            "message": f"Your question about '{tool}' has been received successfully by the Python server!"
+        }), 200
+
+    except Exception as e:
+        print(f"[API ERROR] Something went wrong in /api/ask: {str(e)}", file=sys.stderr)
+        return jsonify({"success": False, "message": "An error occurred on the server."}), 500
+
+# 4. 404 क्रैश प्रोटेक्शन (अगर कोई गलत यूआरएल डाले तो सर्वर बंद होने के बजाय होमपेज पर भेज दे)
+@app.errorhandler(404)
+def page_not_found(e):
+    print(f"[404 WARNING] User tried to access an invalid URL: {request.url}")
+    return send_from_directory('.', 'index.html')
+
+# 5. ग्लोबल एरर हैंडलर (किसी भी अचानक आई खराबी से सर्वर को बचाने के लिए)
+@app.errorhandler(500)
+def internal_server_error(e):
+    print(f"[500 CRITICAL] Global Server Error: {str(e)}", file=sys.stderr)
+    return jsonify({"success": False, "message": "Global Server Error Caught Safely!"}), 500
+
+# 6. सर्वर को रेंडर नेटवर्क पर शुरू करने का मुख्य ब्लॉक
+if __name__ == '__main__':
+    print("====================================================")
+    print("🚀 PYTHON FLASK SECURE SERVER INITIALIZING...")
+    print(f"📡 Binding to Host: 0.0.0.0 | Port: {PORT}")
+    print("====================================================")
+    
+    # host='0.0.0.0' रेंडर नेटवर्क के लिए अनिवार्य है [¹]
+    app.run(host='0.0.0.0', port=PORT, debug=False)
+    
