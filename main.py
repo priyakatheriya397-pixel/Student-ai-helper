@@ -1,9 +1,3 @@
-import os
-from http.server import SimpleHTTPRequestHandler
-from socketserver import TCPServer
-
-# आपका पसंदीदा HTML, CSS और एनिमेटेड पर्पल डिज़ाइन
-HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,6 +64,7 @@ HTML_CONTENT = """
             background: linear-gradient(45deg, #00f0ff, #7f00ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: inline-block;
         }
 
         /* एक्शन बटन स्टाइल */
@@ -246,6 +241,7 @@ HTML_CONTENT = """
             display: flex;
             flex-direction: column;
             gap: 10px;
+            color: #ffffff;
         }
 
         .msg {
@@ -332,4 +328,8 @@ HTML_CONTENT = """
                 <div class="msg bot">Hello! How can I help you build or edit your project today?</div>
             </div>
             <div class="help-chat-input-area">
-            
+                <input type="text" class="help-input" placeholder="Ask a support question...">
+                <button class="help-send-btn">Send</button>
+            </div>
+        </div>
+        
