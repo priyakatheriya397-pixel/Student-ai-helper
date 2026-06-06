@@ -1,3 +1,2 @@
-git add .
-git commit -m "Removed premium section permanently"
-git push origin main -f
+flask
+gunicorn
