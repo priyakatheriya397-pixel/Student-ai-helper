@@ -4,7 +4,7 @@ from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# 🌌 ऑल-इन-वन सुंदर पर्पल डिज़ाइन + 3 ऑप्शंस + असली AI जवाब + मालिक पासवर्ड लॉजिक
+# 🌌 सुंदर पर्पल डिज़ाइन + 3 ऑप्शंस + असली AI जवाब + मालिक पासवर्ड लॉजिक
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -190,4 +190,3 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 @app.route('/')
 def home():
-    
