@@ -3,7 +3,6 @@ from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
-# 1. मुख्य रूट जो नया फैंसी इंग्लिश पेज लोड करेगा
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     html_content = """
@@ -27,7 +26,7 @@ async def read_root():
                 overflow-x: hidden;
             }
 
-            /* टॉप सर्च/लोडिंग लाइन एनीमेशन */
+            /* 1. टॉप सर्च/लोडिंग लाइन एनीमेशन */
             #top-loading-bar {
                 position: fixed;
                 top: 0;
@@ -51,6 +50,28 @@ async def read_root():
 
             .hidden {
                 display: none !important;
+            }
+
+            /* ब्रांडिंग हेडर स्टाइल */
+            .brand-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 30px;
+            }
+
+            .brand-logo {
+                font-size: 32px;
+                filter: drop-shadow(0 0 8px #00f0ff);
+            }
+
+            .brand-name {
+                font-size: 28px;
+                font-weight: bold;
+                letter-spacing: 1px;
+                background: linear-gradient(45deg, #00f0ff, #7f00ff);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
 
             /* एक्शन बटन स्टाइल */
@@ -81,7 +102,7 @@ async def read_root():
                 box-shadow: 0 6px 20px rgba(127, 0, 255, 0.4);
             }
 
-            /* नया फैंसी पर्पल पेज (कलर बदलने वाला बैकग्राउंड) */
+            /* 2. आपका पसंदीदा फैंसी पर्पल पेज (कलर बदलने वाला बैकग्राउंड) */
             #studio-page {
                 background: linear-gradient(125deg, #120024, #2c004d, #1a0033, #0b031a);
                 background-size: 400% 400%;
@@ -113,7 +134,7 @@ async def read_root():
                 letter-spacing: 0.5px;
             }
 
-            /* नया इंग्लिश इनपुट बॉक्स */
+            /* इंग्लिश इनपुट बॉक्स */
             .prompt-box {
                 width: 100%;
                 height: 120px;
@@ -150,6 +171,128 @@ async def read_root():
                 transform: scale(1.05);
                 box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
             }
+
+            /* 3. पृथक हेल्प चैट विजेट स्टाइल */
+            #help-widget-container {
+                position: fixed;
+                bottom: 25px;
+                right: 25px;
+                z-index: 10000;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            .help-trigger-btn {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #00f0ff, #7f00ff);
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: transform 0.3s;
+            }
+
+            .help-trigger-btn:hover {
+                transform: scale(1.1) rotate(5deg);
+            }
+
+            .help-chat-box {
+                width: 320px;
+                height: 400px;
+                background: #150c2a;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 16px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+                margin-bottom: 15px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                backdrop-filter: blur(10px);
+                transition: all 0.3s ease;
+            }
+
+            .help-chat-header {
+                background: linear-gradient(90deg, #1a0a3a, #2c004d);
+                padding: 12px 15px;
+                font-weight: 600;
+                font-size: 14px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .close-help {
+                cursor: pointer;
+                opacity: 0.7;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 16px;
+            }
+
+            .close-help:hover { opacity: 1; }
+
+            .help-chat-messages {
+                flex: 1;
+                padding: 15px;
+                overflow-y: auto;
+                font-size: 13px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .msg {
+                padding: 8px 12px;
+                border-radius: 12px;
+                max-width: 85%;
+            }
+
+            .msg.bot {
+                background: rgba(255, 255, 255, 0.08);
+                align-self: flex-start;
+                border-bottom-left-radius: 2px;
+            }
+
+            .help-chat-input-area {
+                padding: 10px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                display: flex;
+                gap: 8px;
+                background: #0b031a;
+            }
+
+            .help-input {
+                flex: 1;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+                padding: 8px 14px;
+                color: white;
+                font-size: 13px;
+                outline: none;
+            }
+
+            .help-input:focus { border-color: #00f0ff; }
+
+            .help-send-btn {
+                background: #7f00ff;
+                border: none;
+                color: white;
+                padding: 0 15px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 600;
+            }
         </style>
     </head>
     <body>
@@ -157,55 +300,14 @@ async def read_root():
         <!-- टॉप सर्च/लोडिंग लाइन -->
         <div id="top-loading-bar"></div>
 
-        <!-- पहला पेज (होम/चैट स्क्रीन का विकल्प) -->
+        <!-- पहला पेज (होम स्क्रीन विथ न्यू लोगो एंड नाम) -->
         <div id="home-page" class="page">
+            <div class="brand-header">
+                <span class="brand-logo">🤖</span>
+                <span class="brand-name">Chatbot</span>
+            </div>
             <h2>Select an Option to Build</h2>
             <div class="button-container">
                 <button class="action-btn btn-create" onclick="triggerPageTransition('Web Design')">Create Web</button>
                 <button class="action-btn btn-edit" onclick="triggerPageTransition('Edit Web')">Edit Web</button>
-                <button class="action-btn btn-video" onclick="triggerPageTransition('Video AI')">Video AI</button>
-            </div>
-        </div>
-
-        <!-- नया फैंसी पर्पल पेज -->
-        <div id="studio-page" class="page hidden">
-            <div class="studio-container">
-                <h1>Describe what you have to build</h1>
-                <textarea class="prompt-box" placeholder="Type your design requirements here..."></textarea>
-                <button class="send-btn" onclick="submitPrompt()">Generate ✨</button>
-            </div>
-        </div>
-
-        <script>
-            function triggerPageTransition(modeName) {
-                const loadingBar = document.getElementById('top-loading-bar');
-                const homePage = document.getElementById('home-page');
-                const studioPage = document.getElementById('studio-page');
                 
-                loadingBar.style.width = '40%';
-                
-                setTimeout(() => { loadingBar.style.width = '80%'; }, 200);
-                setTimeout(() => { loadingBar.style.width = '100%'; }, 400);
-
-                setTimeout(() => {
-                    homePage.classList.add('hidden');
-                    studioPage.classList.remove('hidden');
-                    loadingBar.style.width = '0%';
-                }, 700);
-            }
-
-            function submitPrompt() {
-                alert("Prompt submitted! Connecting to Python backend...");
-                // भविष्य में बैकएंड API से कनेक्ट करने का कोड यहाँ आएगा
-            }
-        </script>
-    </body>
-    </html>
-    """
-    return html_content
-
-# 2. बैकएंड प्रोसेसिंग के लिए API रूट (भविष्य में काम आएगा)
-@app.post("/generate")
-async def generate_response(prompt: str):
-    return {"status": "success", "message": f"Processing prompt: {prompt}"}
-    
