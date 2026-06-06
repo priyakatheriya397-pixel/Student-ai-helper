@@ -4,6 +4,7 @@ from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
+# 🌌 ऑल-इन-वन सुंदर पर्पल डिज़ाइन + 3 ऑप्शंस + असली AI जवाब + मालिक पासवर्ड लॉजिक
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -186,8 +187,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>"""
 
+
 @app.route('/')
 def home():
-    return render_template_string(HTML_TEMPLATE)
-
-@app.route('/api/chat', methods=['POST'])
+    
