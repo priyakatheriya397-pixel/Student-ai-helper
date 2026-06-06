@@ -1,9 +1,10 @@
 import os
-from flask import Flask, render_template_string
+import requests
+from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
-# 🌌 ऑल-इन-वन सुंदर पर्पल डिज़ाइन + 3 ऑप्शंस + मालिक पासवर्ड लॉजिक
+# 🌌 ऑल-इन-वन सुंदर पर्पल डिज़ाइन + 3 ऑप्शंस + असली AI जवाब + मालिक पासवर्ड लॉजिक
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,10 +41,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .service-card:hover { background: var(--primary-purple); color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(127, 86, 217, 0.2); }
         .service-icon { font-size: 24px; margin-bottom: 8px; display: block; }
 
-        .chat-box { height: 220px; padding: 20px; overflow-y: auto; background: #FFF; border-top: 1px solid #EAECF0; border-bottom: 1px solid #EAECF0; }
-        .message { margin-bottom: 15px; padding: 12px 16px; border-radius: 12px; max-width: 80%; font-size: 15px; line-height: 1.4; }
-        .bot { background: var(--light-purple); color: var(--dark-purple); margin-right: auto; border-bottom-left-radius: 2px; }
-        .user { background: var(--primary-purple); color: white; margin-left: auto; border-bottom-right-radius: 2px; text-align: right; }
+        .chat-box { height: 250px; padding: 20px; overflow-y: auto; background: #FFF; border-top: 1px solid #EAECF0; border-bottom: 1px solid #EAECF0; }
+        .message { margin-bottom: 15px; padding: 12px 16px; border-radius: 12px; max-width: 80%; font-size: 15px; line-height: 1.4; display: block; clear: both; box-sizing: border-box; }
+        .bot { background: var(--light-purple); color: var(--dark-purple); float: left; border-bottom-left-radius: 2px; }
+        .user { background: var(--primary-purple); color: white; float: right; border-bottom-right-radius: 2px; }
         
         .input-area { display: flex; padding: 15px; background: white; gap: 10px; }
         .input-area input { flex: 1; padding: 12px; border: 1px solid #D0D5DD; border-radius: 8px; font-size: 15px; outline: none; }
@@ -83,11 +84,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <div class="chat-box" id="chatBox">
-        <div class="message bot">Welcome! Please click on any option above (Web Design, Video Editor, AI Tutor) or type your message here to start! 🚀</div>
+        <div class="message bot">Welcome! Please click on any option above or type your homework question below! 🚀</div>
     </div>
 
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Type or choose a service above...">
+        <input type="text" id="userInput" placeholder="Type your question here...">
         <button class="btn-send" onclick="sendMessage()">Ask AI</button>
     </div>
 </div>
@@ -95,6 +96,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <script src="https://razorpay.com"></script>
 <script>
     let isPremiumUser = false;
+    let selectedMode = "AI Tutor";
 
     function checkOwnerAccess() {
         let passInput = document.getElementById("ownerPass").value;
@@ -104,7 +106,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         if (passInput === "12306") {
             isPremiumUser = true;
             banner.innerHTML = `<div style="color: var(--success-green); font-weight: bold; padding: 10px; font-size: 18px;">👑 Owner / Admin Access Activated Successfully! 👑</div>`;
-            chatBox.innerHTML += `<div class="message bot" style="background: #E8F5E9; color: #2E7D32;"><b>System:</b> Master Password Accepted! All services unlocked for Admin. 😎</div>`;
+            chatBox.innerHTML += `<div class="message bot" style="background: #E8F5E9; color: #2E7D32; float: left; width: 100%;"><b>System:</b> Master Password Accepted! All services unlocked for Admin. 😎</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
         } else {
             alert("❌ Wrong Owner Password!");
@@ -112,37 +114,55 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     function selectService(serviceName) {
+        selectedMode = serviceName;
         let chatBox = document.getElementById("chatBox");
-        chatBox.innerHTML += `<div class="message user">I want to use ${serviceName} Service</div>`;
+        chatBox.innerHTML += `<div class="message user">${serviceName} Service चयनित की गई।</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
         setTimeout(() => {
-            if (isPremiumUser) {
-                chatBox.innerHTML += `<div class="message bot" style="border: 2px solid var(--success-green);">✨ <b>[PREMIUM UNLOCKED]</b> ${serviceName} tool ready for Admin use! ✅</div>`;
-            } else {
-                chatBox.innerHTML += `<div class="message bot">You selected <b>${serviceName}</b>. To access templates for this service, please activate your <b>Premium Plan</b> above! 💎</div>`;
-            }
+            chatBox.innerHTML += `<div class="message bot">Now ready for <b>${serviceName}</b>. Ask your question below! 🎯</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-        }, 600);
+        }, 500);
     }
 
-    function sendMessage() {
+    async function sendMessage() {
         let input = document.getElementById("userInput");
         let chatBox = document.getElementById("chatBox");
-        if(input.value.trim() === "") return;
+        let text = input.value.trim();
+        if(text === "") return;
 
-        chatBox.innerHTML += `<div class="message user">${input.value}</div>`;
+        chatBox.innerHTML += `<div class="message user">${text}</div>`;
         input.value = "";
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        setTimeout(() => {
-            if (isPremiumUser) {
-                chatBox.innerHTML += `<div class="message bot" style="border: 2px solid var(--success-green);">✨ <b>[PREMIUM]</b> AI Tutor solved your homework perfectly! 🎯</div>`;
-            } else {
-                chatBox.innerHTML += `<div class="message bot">Please subscribe to our <b>Premium Plan</b> above to unlock complete expert answers! 🚀</div>`;
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }, 800);
+        // अगर यूजर प्रीमियम नहीं है (और न ही मालिक है), तो वह सिर्फ 1 फ्री सवाल पूछ सकता है, उसके बाद ब्लॉक
+        if (!isPremiumUser) {
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="message bot">⚠️ <b>Premium Required:</b> To view the complete verified answer for "${text}", please subscribe to our <b>Premium Plan</b> or log in as Owner! 💎</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 600);
+            return;
+        }
+
+        // प्रीमियम यूजर या मालिक के लिए असली AI जवाब (Backend Fetch)
+        chatBox.innerHTML += `<div class="message bot" id="loading-msg">🤖 AI is thinking...</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            let response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: text, mode: selectedMode })
+            });
+            let data = await response.json();
+            
+            document.getElementById("loading-msg").remove();
+            chatBox.innerHTML += `<div class="message bot" style="border-left: 4px solid var(--success-green);">✨ <b>[PREMIUM ANSWER]</b><br>${data.answer}</div>`;
+        } catch (err) {
+            document.getElementById("loading-msg").remove();
+            chatBox.innerHTML += `<div class="message bot">❌ Server Busy. Please try again!</div>`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     function payNow() {
@@ -155,9 +175,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             "handler": function (response){
                 isPremiumUser = true;
                 document.getElementById("premiumBanner").innerHTML = `<div style="color: var(--success-green); font-weight: bold; padding: 10px;">✨ Premium Subscription Active! ✨</div>`;
-                alert("🎉 Payment Successful! ID: " + response.razorpay_payment_id);
+                alert("🎉 Payment Successful!");
             },
-            "prefill": { "name": "Student", "email": "student@example.com" },
             "theme": { "color": "#7F56D9" }
         };
         var rzp1 = new Razorpay(options);
@@ -165,13 +184,3 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 </script>
 </body>
-</html>"""
-
-@app.route('/')
-def home():
-    return render_template_string(HTML_TEMPLATE)
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
-    
