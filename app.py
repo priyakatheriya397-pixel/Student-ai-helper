@@ -4,218 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free AI & Learning Tools</title>
-    <!-- Google Fonts for professional look -->
     <link href="https://googleapis.com" rel="stylesheet">
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        /* Header / Navbar Styling */
-        header {
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            margin-top: 20px;
-            margin-bottom: 40px;
-        }
-
-        header h1 {
-            font-size: 24px;
-            color: #4a148c;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        header p {
-            font-size: 14px;
-            color: #666;
-        }
-
-        /* Grid Layout for Tools */
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 30px;
-        }
-
-        /* Tool Card Styling */
-        .tool-card {
-            background: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .tool-card:hover {
-            transform: translateY(-4px);
-            border-color: #7c4dff;
-            box-shadow: 0 8px 16px rgba(124, 77, 255, 0.1);
-        }
-
-        .tool-icon {
-            font-size: 32px;
-            margin-bottom: 12px;
-            display: inline-block;
-        }
-
-        .tool-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #424242;
-        }
-
-        /* Chat / Input Box Area */
-        .workspace-container {
-            width: 100%;
-            max-width: 600px;
-            background: #ffffff;
-            border-radius: 16px;
-            border: 1px solid #e0e0e0;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.01);
-        }
-
-        .welcome-text {
-            background-color: #f3e5f5;
-            color: #4a148c;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 25px;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .question-input {
-            flex: 1;
-            padding: 14px 18px;
-            border: 1px solid #cccccc;
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .question-input:focus {
-            border-color: #7c4dff;
-        }
-
-        .ask-btn {
-            background-color: #7c4dff;
-            color: white;
-            border: none;
-            padding: 0 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .ask-btn:hover {
-            background-color: #651fff;
-        }
-
-        /* Responsive Design for Small Phones */
-        @media (max-width: 480px) {
-            .tools-grid {
-                grid-template-columns: 1fr; /* मोबाइल पर टूल्स एक के नीचे एक दिखेंगे */
-            }
-            .input-group {
-                flex-direction: column;
-            }
-            .ask-btn {
-                padding: 14px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f8f9fa; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+        header { width: 100%; max-width: 600px; text-align: center; margin-top: 20px; margin-bottom: 40px; }
+        header h1 { font-size: 24px; color: #4a148c; font-weight: 700; margin-bottom: 8px; }
+        header p { font-size: 14px; color: #666; }
+        .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 600px; margin-bottom: 30px; }
+        .tool-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .tool-card:hover { transform: translateY(-4px); border-color: #7c4dff; box-shadow: 0 8px 16px rgba(124, 77, 255, 0.1); }
+        .tool-icon { font-size: 32px; margin-bottom: 12px; display: inline-block; }
+        .tool-name { font-size: 14px; font-weight: 600; color: #424242; }
+        .workspace-container { width: 100%; max-width: 600px; background: #ffffff; border-radius: 16px; border: 1px solid #e0e0e0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
+        .welcome-text { background-color: #f3e5f5; color: #4a148c; padding: 15px; border-radius: 10px; font-size: 14px; line-height: 1.5; margin-bottom: 25px; font-weight: 500; text-align: center; }
+        .input-group { display: flex; gap: 10px; }
+        .question-input { flex: 1; padding: 14px 18px; border: 1px solid #cccccc; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .question-input:focus { border-color: #7c4dff; }
+        .ask-btn { background-color: #7c4dff; color: white; border: none; padding: 0 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .ask-btn:hover { background-color: #651fff; }
+        @media (max-width: 480px) { .tools-grid { grid-template-columns: 1fr; } .input-group { flex-direction: column; } .ask-btn { padding: 14px; } }
     </style>
 </head>
 <body>
-
-    <!-- Header Section -->
     <header>
         <h1>Smart Study Workspace</h1>
         <p>Learn Web Design, Edit Videos, and Ask AI anything for Free</p>
     </header>
-
-    <!-- Tools Options Section -->
     <div class="tools-grid">
         <div class="tool-card" onclick="selectTool('Web Design')">
             <span class="tool-icon">💻</span>
             <div class="tool-name">Web Design</div>
         </div>
-        
         <div class="tool-card" onclick="selectTool('Video Editor')">
             <span class="tool-icon">🎬</span>
             <div class="tool-name">Video Editor</div>
         </div>
-        
         <div class="tool-card" onclick="selectTool('AI Tutor')">
             <span class="tool-icon">🤖</span>
             <div class="tool-name">AI Tutor</div>
         </div>
     </div>
-
-    <!-- Main Workspace / Chat Section -->
     <div class="workspace-container">
         <div class="welcome-text" id="welcomeMessage">
             👋 Welcome! Please click on any option above or type your homework question below! 🚀
         </div>
-        
         <div class="input-group">
             <input type="text" class="question-input" id="userInput" placeholder="Type your question here...">
             <button class="ask-btn" onclick="submitQuestion()">Ask AI</button>
         </div>
     </div>
-
     <script>
-        // जब यूजर किसी टूल पर क्लिक करेगा
         function selectTool(toolName) {
             const messageBox = document.getElementById('welcomeMessage');
             messageBox.innerHTML = `🎯 You have selected <b>${toolName}</b>. Type your topic or requirement below to start!`;
             document.getElementById('userInput').placeholder = `Ask about ${toolName}...`;
         }
-
-        // जब यूजर Ask AI बटन दबाएगा
         function submitQuestion() {
             const inputVal = document.getElementById('userInput').value;
-            if(inputVal.trim() === "") {
-                alert("Please enter a question first!");
-                return;
-            }
+            if(inputVal.trim() === "") { alert("Please enter a question first!"); return; }
             alert("Your question: '" + inputVal + "' has been submitted to AI Backend!");
-            // यहाँ आप अपने Backend API (Node.js/Python) का कोड जोड़ सकते हैं
             document.getElementById('userInput').value = "";
         }
     </script>
-
 </body>
 </html>
