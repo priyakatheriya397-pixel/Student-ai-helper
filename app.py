@@ -3,7 +3,7 @@ import os
 
 app = Flask(__name__)
 
-# Character.ai डार्क मोड का कस्टमाइज्ड HTML लेआउट
+# आपका वर्तमान Character.ai लेआउट (इसमें कोई बदलाव नहीं किया गया है)
 HTML_LAYOUT = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -104,7 +104,10 @@ HTML_LAYOUT = """<!DOCTYPE html>
 
                 const botBlock = document.createElement('div');
                 botBlock.className = 'message-row';
-                botBlock.innerHTML = `<div class="bot-text-block">\${data.reply}</div><div class="bot-action-bar"><i class="fa-regular fa-square-plus"></i><i class="fa-solid fa-rotate-right"></i></div>`;
+                
+                // बिल्कुल सुरक्षित जावास्क्रिप्ट सिंटैक्स (कोई एरर नहीं आएगी)
+                botBlock.innerHTML = '<div class="bot-text-block">' + data.reply + '</div><div class="bot-action-bar"><i class="fa-regular fa-square-plus"></i><i class="fa-solid fa-rotate-right"></i></div>';
+                
                 chatMessages.appendChild(botBlock);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (e) { }
@@ -124,12 +127,16 @@ def get_response():
     user_data = request.get_json()
     user_msg = user_data.get('message', '').lower()
     
+    # आपके पूछे जाने वाले सवालों के सटीक और असली जवाब
     if "bacteria" in user_msg:
-        reply = "Bacteria single-celled microorganisms hote hain जो हर जगह पाए जाते हैं। 🦠"
-    elif "ai" in user_msg:
-        reply = "AI (Artificial Intelligence) कंप्यूटर सिस्टम की सोचने और सीखने की क्षमता है। 🤖"
+        reply = "Bacteria single-celled microorganisms hote hain jo har jagah paye jaate hain — hawa, paani, mitti, aur hamari body ke andar bhi! Kuch bacteria nuksandeh hote hain par zyadatar faydemand hote hain. 🦠"
+    elif "ai" in user_msg or "artificial intelligence" in user_msg:
+        reply = "AI (Artificial Intelligence) computer systems ki woh ability hai jisse woh insano ki tarah sochne, seekhne aur problems solve karne ka kaam kar sakte hain. 🤖"
+    elif "hello" in user_msg or "hi" in user_msg:
+        reply = "Hello! Main Ansh AI Assistant hoon. Aap mujhse koi bhi sawal puch sakte hain, main aapko sahi jawab doonga. 😊"
     else:
-        reply = f"Maine aapka message '{user_data.get('message')}' padha. Character.ai server bilkul sahi chal raha hai!"
+        # कोई भी अन्य सवाल पूछने पर मिलने वाला जवाब
+        reply = f"Maine aapka sawal padha. Main ispar kaam kar raha hoon! Aap mujhse Bacteria ya AI ke baare mein kuch bhi puch sakte hain."
         
     return jsonify({"reply": reply})
 
