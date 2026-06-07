@@ -1,58 +1,64 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request, jsonify
+import requests
 import os
 
 app = Flask(__name__)
 
-# Character.ai का बिल्कुल सटीक मोबाइल ऐप इंटरफ़ेस
+# अपनी गूगल एआई स्टूडियो (Google AI Studio) की फ्री एपीआई की यहाँ डालें
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Character.ai Clone</title>
+    <title>Character.ai</title>
     <link rel="stylesheet" href="https://cloudflare.com">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #18181c; color: #f3f3f3; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .chat-container { width: 100%; max-width: 550px; height: 100vh; background-color: #121214; display: flex; flex-direction: column; }
-        .chat-header { display: flex; align-items: center; padding: 14px 20px; background-color: #18181c; border-bottom: 1px solid #232329; }
-        .back-btn { font-size: 18px; margin-right: 18px; color: #939399; cursor: pointer; }
-        .char-avatar-large { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #8a2be2, #4a00e0); display: flex; justify-content: center; align-items: center; margin-right: 14px; font-size: 22px; color: #fff; }
-        .char-info h2 { font-size: 16px; font-weight: 600; color: #ffffff; }
-        .char-info p { font-size: 12px; color: #939399; margin-top: 2px; }
-        .chat-messages { flex: 1; padding: 24px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background-color: #09090b; color: #f4f4f5; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .chat-container { width: 100%; max-width: 480px; height: 100vh; background-color: #09090b; display: flex; flex-direction: column; }
+        .chat-header { display: flex; align-items: center; padding: 16px 20px; background-color: #09090b; border-bottom: 1px solid #18181b; }
+        .back-btn { font-size: 20px; margin-right: 16px; color: #a1a1aa; cursor: pointer; }
+        .char-avatar-large { width: 40px; height: 40px; border-radius: 50%; background: #27272a; display: flex; justify-content: center; align-items: center; margin-right: 12px; font-size: 18px; color: #a1a1aa; }
+        .char-info h2 { font-size: 15px; font-weight: 600; color: #ffffff; }
+        .char-info p { font-size: 11px; color: #71717a; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         .chat-messages::-webkit-scrollbar { width: 0px; }
         .message-row { display: flex; width: 100%; align-items: flex-start; }
         .bot-row { justify-content: flex-start; }
         .user-row { justify-content: flex-end; }
-        .char-avatar-small { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #8a2be2, #4a00e0); display: flex; justify-content: center; align-items: center; font-size: 14px; color: #fff; margin-right: 12px; flex-shrink: 0; }
-        .message-content { font-size: 15px; line-height: 1.6; max-width: 82%; word-wrap: break-word; color: #e3e3e6; }
-        .char-name-tag { font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 4px; }
-        .user-row .message-content { background-color: #202024; padding: 10px 16px; border-radius: 16px; border-bottom-right-radius: 4px; }
-        .chat-input-area { padding: 20px; background-color: #121214; display: flex; align-items: center; justify-content: center; }
-        .input-wrapper { width: 100%; display: flex; align-items: center; background-color: #202024; border: 1px solid #2d2d34; border-radius: 26px; padding: 6px 18px; }
-        .input-wrapper input { flex: 1; background: none; border: none; outline: none; color: #ffffff; font-size: 15px; height: 38px; }
-        .send-btn { background: none; border: none; color: #939399; font-size: 18px; cursor: pointer; margin-left: 10px; }
+        .char-avatar-small { width: 28px; height: 28px; border-radius: 50%; background: #27272a; display: flex; justify-content: center; align-items: center; font-size: 12px; color: #a1a1aa; margin-right: 10px; margin-top: 2px; flex-shrink: 0; }
+        .char-name-tag { font-size: 12px; font-weight: 500; color: #a1a1aa; margin-bottom: 2px; }
+        .message-content { font-size: 14.5px; line-height: 1.5; max-width: 80%; word-wrap: break-word; }
+        .bot-row .message-content { color: #e4e4e7; }
+        .user-row .message-content { background-color: #1f1f23; padding: 10px 16px; border-radius: 18px; color: #f4f4f5; }
+        .chat-input-area { padding: 16px; background-color: #09090b; display: flex; align-items: center; gap: 12px; }
+        .input-wrapper { flex: 1; display: flex; align-items: center; background-color: #18181b; border-radius: 24px; padding: 6px 16px; }
+        .input-wrapper input { flex: 1; background: none; border: none; outline: none; color: #ffffff; font-size: 14.5px; height: 36px; }
+        .input-wrapper input::placeholder { color: #52525b; }
+        .send-btn { background: none; border: none; color: #52525b; font-size: 18px; cursor: pointer; transition: color 0.2s; }
         .send-btn.active { color: #ffffff; }
+        .typing-indicator { font-size: 12px; color: #71717a; font-style: italic; margin-left: 38px; }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
             <div class="back-btn"><i class="fa-solid fa-chevron-left"></i></div>
-            <div class="char-avatar-large"><i class="fa-solid fa-ghost"></i></div>
+            <div class="char-avatar-large"><i class="fa-solid fa-user-astronaut"></i></div>
             <div class="char-info">
                 <h2>AI Chatbot</h2>
-                <p>@ansh_tutor द्वारा निर्मित</p>
+                <p>c.ai डार्क क्लोन</p>
             </div>
         </div>
         <div class="chat-messages" id="chatMessages">
             <div class="message-row bot-row">
-                <div class="char-avatar-small"><i class="fa-solid fa-ghost"></i></div>
+                <div class="char-avatar-small"><i class="fa-solid fa-user-astronaut"></i></div>
                 <div class="message-content">
                     <div class="char-name-tag">AI Chatbot</div>
-                    नमस्ते! मैं आपका नया कैरेक्टर असिस्टेंट हूँ। मेरा रूप-रंग अब बिल्कुल असली Character.ai जैसा है। 😊
+                    नमस्ते! मैं आपका लाइव कैरेक्टर हूँ। अब मैं असली जवाब दूंगा, बार-बार एक ही चीज़ नहीं दोहराऊंगा। पूछिए क्या पूछना है? 😊
                 </div>
             </div>
         </div>
@@ -63,20 +69,22 @@ HTML_TEMPLATE = """
             </div>
         </div>
     </div>
+
     <script>
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
 
         userInput.addEventListener('input', () => {
-            if(userInput.value.trim() !== "") sendBtn.classList.add('active');
+            if (userInput.value.trim() !== "") sendBtn.classList.add('active');
             else sendBtn.classList.remove('active');
         });
 
-        function sendMessage() {
+        async function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
 
+            // यूजर का मेसेज स्क्रीन पर डालें
             const userRow = document.createElement('div');
             userRow.className = 'message-row user-row';
             userRow.innerHTML = `<div class="message-content">${text}</div>`;
@@ -86,20 +94,42 @@ HTML_TEMPLATE = """
             sendBtn.classList.remove('active');
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            setTimeout(() => {
+            // टाइपिंग इंडिकेटर जोड़ें
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.id = 'typing';
+            typingIndicator.innerText = "typing...";
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                // सर्वर से असली जवाब मांगना
+                const response = await fetch('/get_response', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await response.json();
+                
+                document.getElementById('typing').remove();
+
+                // बोट का असली रिप्लाई जोड़ें
                 const botRow = document.createElement('div');
                 botRow.className = 'message-row bot-row';
                 botRow.innerHTML = `
-                    <div class="char-avatar-small"><i class="fa-solid fa-ghost"></i></div>
+                    <div class="char-avatar-small"><i class="fa-solid fa-user-astronaut"></i></div>
                     <div class="message-content">
                         <div class="char-name-tag">AI Chatbot</div>
-                        नया Character.ai डिज़ाइन पूरी तरह काम कर रहा है! 👍
+                        ${data.reply}
                     </div>
                 `;
                 chatMessages.appendChild(botRow);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 1000);
+            } catch (e) {
+                document.getElementById('typing').remove();
+            }
         }
+
         sendBtn.addEventListener('click', sendMessage);
         userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     </script>
@@ -111,7 +141,24 @@ HTML_TEMPLATE = """
 def home():
     return render_template_string(HTML_TEMPLATE)
 
+@app.route('/get_response', methods=['POST'])
+def get_response():
+    user_data = request.get_json()
+    user_msg = user_data.get('message', '')
+    
+    # गूगल जेमिनी एपीआई के बिना लाइब्रेरी वाला डायरेक्ट HTTP रिक्वेस्ट
+    url = f"https://googleapis.com{GEMINI_API_KEY}"
+    headers = {'Content-Type': 'application/json'}
+    payload = {"contents": [{"parts": [{"text": user_msg}]}]}
+    
+    try:
+        res = requests.post(url, headers=headers, json=payload)
+        res_data = res.json()
+        ai_reply = res_data['candidates'][0]['content']['parts'][0]['text']
+        return jsonify({"reply": ai_reply})
+    except:
+        return jsonify({"reply": "सर्वर अभी लोड नहीं ले पा रहा है, कृपया दोबारा प्रयास करें।"})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-    
