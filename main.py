@@ -208,4 +208,4 @@ async def read_root():
 @app.post("/generate")
 async def generate_response(prompt: str):
     return {"status": "success", "message": f"Processing prompt: {prompt}"}
-    
+
