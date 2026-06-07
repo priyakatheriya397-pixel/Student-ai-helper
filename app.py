@@ -1,9 +1,10 @@
 import os
 from flask import Flask, request, jsonify, render_template_string
+from duckduckgo_search import DDGS
 
 app = Flask(__name__)
 
-# चैटबॉट का पूरा डिज़ाइन (HTML) सीधे कोड के अंदर
+# चैटबॉट का पूरा डिज़ाइन (HTML)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +30,7 @@ HTML_TEMPLATE = """
 <div class="chat-container">
     <div class="chat-header">मेरा AI चैटबॉट</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot-msg">नमस्ते! मैं आपकी क्या मदद कर सकता हूँ?</div>
+        <div class="message bot-msg">नमस्ते! मैं आपका AI चैटबॉट हूँ। पूछिए, आज आपको क्या जानना है?</div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="यहाँ अपना सवाल लिखें...">
@@ -75,32 +76,26 @@ def home():
 def bot_response():
     try:
         data = request.get_json()
-        user_message = data.get("message", "").strip().lower() if data else ""
+        user_message = data.get("message", "").strip() if data else ""
         
         if not user_message:
-            user_message = request.form.get('msg', '').strip().lower()
+            user_message = request.form.get('msg', '').strip()
 
         if not user_message:
             return jsonify({"response": "कृपया कुछ टाइप करें..."})
 
-        # यहाँ बोट के खुद के स्मार्ट जवाब सेट हैं (बिना किसी API के)
-        if "what is ai" in user_message or "ai kya hai" in user_message:
-            ai_response = "AI (Artificial Intelligence) यानी कृत्रिम बुद्धिमत्ता, कंप्यूटर को इंसानों की तरह सोचने और सीखने की शक्ति देती है।"
-        elif "hello" in user_message or "hi" in user_message or "नमस्ते" in user_message:
-            ai_response = "नमस्ते! मैं आपका पर्सनल चैटबॉट हूँ। आज मैं आपकी क्या सहायता कर सकता हूँ?"
-        elif "how are you" in user_message or "kaise ho" in user_message:
-            ai_response = "मैं बिल्कुल ठीक हूँ! आप बताइए, आपका दिन कैसा चल रहा है?"
-        elif "your name" in user_message or "naam kya hai" in user_message:
-            ai_response = "मेरा नाम 'मेरा AI चैटबॉट' है, जिसे पाइथन और फ्लास्क की मदद से बनाया गया है।"
-        elif "thank" in user_message or "shukriya" in user_message:
-            ai_response = "आपका स्वागत है! अगर कोई और सवाल हो तो ज़रूर पूछें।"
-        else:
-            ai_response = f"आपने पूछा: '{user_message}'। बिना API Key के मैं अभी सिर्फ मुख्य सवालों के जवाब दे सकता हूँ। आप मुझसे 'What is AI' या 'Hi' पूछकर टेस्ट कर सकते हैं!"
+        # फ्री अनलिमिटेड AI मॉडल (GPT-4o-mini) से जवाब पाना
+        with DDGS() as ddgs:
+            # हम बोट को हिंदी/इंग्लिश दोनों समझने के लिए प्रॉम्प्ट दे रहे हैं
+            full_prompt = f"Respond helpful and accurately. User question: {user_message}"
+            response = ddgs.chat(full_prompt, model="gpt-4o-mini")
+            ai_response = response
 
         return jsonify({"response": ai_response})
 
     except Exception as e:
-        return jsonify({"response": "सर्वर के अंदर कुछ गड़बड़ हुई है।"})
+        print(f"Error: {e}")
+        return jsonify({"response": "माफ़ कीजिये, अभी सर्वर व्यस्त है। कृपया दोबारा प्रयास करें।"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
