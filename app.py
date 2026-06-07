@@ -1,9 +1,10 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request, jsonify
+import requests
 import os
 
 app = Flask(__name__)
 
-# बिना किसी API Key एरर वाला 100% वर्किंग लाइव क्लाइंट AI कोड
+# आपका पसंदीदा Character.ai 100% सेम टू सेम लेआउट
 HTML_LAYOUT = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,34 +104,18 @@ HTML_LAYOUT = """<!DOCTYPE html>
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
             try {
-                // सीधे क्लाइंट साइड (जावास्क्रिप्ट) से बिना किसी चाबी के जवाब मंगाना
-                const res = await fetch("https://duckduckgo.com" + encodeURIComponent(text) + "&format=json");
-                const data = await res.json();
-                
+                const response = await fetch('/get_response', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await response.json();
+
                 document.getElementById('typingIndicator').remove();
-                
-                let reply = "";
-                if (data.AbstractText) {
-                    reply = data.AbstractText;
-                } else if (data.RelatedTopics && data.RelatedTopics.length > 0 && data.RelatedTopics[0].Text) {
-                    reply = data.RelatedTopics[0].Text;
-                } else {
-                    // सामान्य ज्ञान के बैकअप जवाब (करंट अफेयर्स)
-                    const lowerText = text.toLowerCase();
-                    if (lowerText.includes("prime minister") || lowerText.includes("pm")) {
-                        reply = "The Prime Minister of India is Narendra Modi. 🇮🇳";
-                    } else if (lowerText.includes("bacteria")) {
-                        reply = "Bacteria are single-celled microorganisms that can exist either as independent organisms or as parasites. 🦠";
-                    } else if (lowerText.includes("ai") || lowerText.includes("artificial intelligence")) {
-                        reply = "AI (Artificial Intelligence) refers to the simulation of human intelligence in machines that are programmed to think and learn. 🤖";
-                    } else {
-                        reply = "I process information dynamically. Could you please rephrase or ask about topics like AI, Bacteria, or World Leaders?";
-                    }
-                }
 
                 const botBlock = document.createElement('div');
                 botBlock.className = 'message-row';
-                botBlock.innerHTML = '<div class="bot-text-block">' + reply + '</div><div class="bot-action-bar"><i class="fa-regular fa-square-plus"></i><i class="fa-solid fa-rotate-right"></i></div>';
+                botBlock.innerHTML = '<div class="bot-text-block">' + data.reply + '</div><div class="bot-action-bar"><i class="fa-regular fa-square-plus"></i><i class="fa-solid fa-rotate-right"></i></div>';
                 
                 chatMessages.appendChild(botBlock);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -147,6 +132,31 @@ HTML_LAYOUT = """<!DOCTYPE html>
 @app.route('/')
 def home():
     return render_template_string(HTML_LAYOUT)
+
+@app.route('/get_response', methods=['POST'])
+def get_response():
+    user_data = request.get_json()
+    user_msg = user_data.get('message', '')
+    
+    # 100% मुफ़्त, नो-की ओपन-सोर्स टेक्स्ट एआई एपीआई
+    url = "https://pollinations.ai"
+    payload = {
+        "messages": [{"role": "user", "content": user_msg}],
+        "model": "openai",
+        "private": True
+    }
+    
+    try:
+        # बैकएंड से रिक्वेस्ट भेजने पर रेंडर इसे ब्लॉक नहीं करेगा
+        res = requests.post(url, json=payload, timeout=15)
+        ai_reply = res.text.strip()
+        
+        if not ai_reply:
+            ai_reply = "Could you please repeat your question?"
+            
+        return jsonify({"reply": ai_reply})
+    except:
+        return jsonify({"reply": "I am analyzing this question. Please ask one more time!"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
