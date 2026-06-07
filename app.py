@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
+# ऑल-इन-वन सुंदर चैट इंटरफ़ेस (HTML + JS)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -27,12 +28,12 @@ HTML_TEMPLATE = """
 <body>
 
 <div class="chat-container">
-    <div class="chat-header">मेरा AI चैटबॉट</div>
+    <div class="chat-header">मेरा असली AI चैटबॉट</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot-msg">नमस्ते! मैं आपका स्मार्ट चैटबॉट हूँ। कुछ भी पूछिए (जैसे: What is AI, What is bacteria)!</div>
+        <div class="message bot-msg">नमस्ते! मैं आपका असली AI असिस्टेंट हूँ। आप मुझसे दुनिया का कोई भी सवाल पूछ सकते हैं!</div>
     </div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="यहाँ अपना सवाल लिखें...">
+        <input type="text" id="userInput" placeholder="यहाँ अपना कोई भी सवाल लिखें...">
         <button onclick="sendMessage()">भेजें</button>
     </div>
 </div>
@@ -83,38 +84,30 @@ def bot_response():
         if not user_message:
             return jsonify({"response": "कृपया कुछ टाइप करें..."})
 
-        clean_msg = user_message.lower()
-
-        # 1. सामान्य बातचीत के लिए तुरंत जवाब
-        if clean_msg in ["hi", "hello", "hey", "नमस्ते"]:
-            return jsonify({"response": "नमस्ते! मैं बिल्कुल तैयार हूँ। आज आप क्या सीखना या जानना चाहते हैं?"})
-        elif "how are you" in clean_msg or "kaise ho" in clean_msg:
-            return jsonify({"response": "मैं एकदम बढ़िया हूँ! आप बताइए, आज इंटरनेट से आपके लिए क्या ढूंढ कर लाऊँ?"})
-
-        # 2. ज्ञान वाले सवालों के लिए विकिपीडिया सर्च (जैसे What is AI, What is bacteria)
-        # सवाल में से फालतू शब्द हटाकर मुख्य टॉपिक निकालना
-        search_query = user_message
-        for word in ["what is a ", "what is an ", "what is ", "define ", "who is ", "kya hai"]:
-            if clean_msg.startswith(word):
-                search_query = user_message[len(word):].strip()
-                break
+        # 100% फ्री बिना की (Key) वाला AI API URL
+        api_url = "https://text.pollinations.ai/"
         
-        # विकिपीडिया फ्री API से डेटा लाना
-        wiki_url = f"https://wikipedia.org{search_query.replace(' ', '_')}"
-        headers = {'User-Agent': 'MyChatBotApp/1.0 (contact@example.com)'}
+        # AI को निर्देश देना ताकि वह हमेशा हिंदी और सरल भाषा में जवाब दे
+        payload = {
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant. Always reply in Hindi unless asked otherwise."},
+                {"role": "user", "content": user_message}
+            ]
+        }
         
-        response = requests.get(wiki_url, headers=headers)
+        # API को पोस्ट रिक्वेस्ट भेजना
+        response = requests.post(api_url, json=payload)
         
         if response.status_code == 200:
-            wiki_data = response.json()
-            ai_response = wiki_data.get('extract', 'मुझे इसके बारे में जानकारी तो मिली पर मैं समझा नहीं पाया।')
+            ai_response = response.text  # असली AI का जवाब
         else:
-            ai_response = f"माफ़ कीजिये, मुझे '{search_query}' के बारे में कोई सटीक जानकारी नहीं मिली। कृपया सरल शब्दों में दोबारा पूछें।"
+            ai_response = "माफ़ कीजिये, अभी मेरा दिमाग काम नहीं कर रहा है। कृपया दोबारा पूछें।"
 
         return jsonify({"response": ai_response})
 
     except Exception as e:
-        return jsonify({"response": "सर्वर में कुछ तकनीकी दिक्कत है, कृपया दोबारा प्रयास करें।"})
+        print(f"Error: {e}")
+        return jsonify({"response": "सर्वर में कुछ समस्या आ रही है, कृपया दोबारा प्रयास करें।"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
