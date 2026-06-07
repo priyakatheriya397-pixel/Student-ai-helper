@@ -3,7 +3,6 @@ from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
-# 1. मुख्य रूट जो नया फैंसी इंग्लिश पेज लोड करेगा
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     html_content = """
@@ -12,7 +11,7 @@ async def read_root():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Chatbot Studio</title>
+        <title>Chatbot Studio AI</title>
         <style>
             * {
                 margin: 0;
@@ -20,192 +19,171 @@ async def read_root():
                 box-sizing: border-box;
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
-
             body {
-                background-color: #0b031a;
+                background: linear-gradient(135deg, #2e1a47, #120c1f);
                 color: #ffffff;
-                overflow-x: hidden;
-            }
-
-            /* टॉप सर्च/लोडिंग लाइन एनीमेशन */
-            #top-loading-bar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #ff007f, #7f00ff, #00f0ff);
-                width: 0%;
-                z-index: 9999;
-                transition: width 0.4s ease;
-                box-shadow: 0 0 10px #7f00ff, 0 0 20px #ff007f;
-            }
-
-            .page {
-                min-height: 100vh;
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
                 align-items: center;
+                justify-content: center;
+                min-height: 100vh;
                 padding: 20px;
             }
-
-            .hidden {
-                display: none !important;
-            }
-
-            /* एक्शन बटन स्टाइल */
-            .button-container {
-                display: flex;
-                gap: 15px;
-                margin-top: 20px;
-            }
-
-            .action-btn {
-                padding: 12px 24px;
-                font-size: 16px;
-                font-weight: 600;
-                border: none;
-                border-radius: 30px;
-                cursor: pointer;
-                color: white;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            }
-
-            .btn-create { background: linear-gradient(135deg, #4d66ff, #2544ff); }
-            .btn-edit { background: linear-gradient(135deg, #ff9f43, #ff6b6b); }
-            .btn-video { background: linear-gradient(135deg, #a55eea, #8854d0); }
-
-            .action-btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 6px 20px rgba(127, 0, 255, 0.4);
-            }
-
-            /* नया फैंसी पर्पल पेज (कलर बदलने वाला बैकग्राउंड) */
-            #studio-page {
-                background: linear-gradient(125deg, #120024, #2c004d, #1a0033, #0b031a);
-                background-size: 400% 400%;
-                animation: gradientMove 12s ease infinite;
-            }
-
-            @keyframes gradientMove {
-                0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-            }
-
-            .studio-container {
+            .container {
+                width: 100%;
+                max-width: 650px;
                 text-align: center;
-                width: 100%;
-                max-width: 600px;
-                padding: 30px;
-                background: rgba(255, 255, 255, 0.03);
-                border-radius: 20px;
-                backdrop-filter: blur(10px);
-                border: 1px rgba(255, 255, 255, 0.1) solid;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             }
-
-            .studio-container h1 {
-                font-size: 24px;
-                margin-bottom: 20px;
-                font-weight: 500;
-                letter-spacing: 0.5px;
+            h1 {
+                font-size: 2.2rem;
+                margin-bottom: 10px;
+                font-weight: 600;
+                background: linear-gradient(to right, #b388ff, #ea80fc);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
-
-            /* नया इंग्लिश इनपुट बॉक्स */
-            .prompt-box {
-                width: 100%;
-                height: 120px;
-                background: rgba(0, 0, 0, 0.4);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 12px;
-                color: white;
+            p {
+                color: #b3a4cb;
+                margin-bottom: 30px;
+                font-size: 1rem;
+            }
+            .search-box {
+                background: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(179, 136, 255, 0.3);
+                border-radius: 16px;
                 padding: 15px;
-                font-size: 16px;
-                resize: none;
-                outline: none;
-                transition: border 0.3s;
-                margin-bottom: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+                backdrop-filter: blur(4px);
+                margin-bottom: 35px;
             }
-
-            .prompt-box:focus {
-                border-color: #8854d0;
-                box-shadow: 0 0 10px rgba(136, 84, 208, 0.5);
-            }
-
-            .send-btn {
-                background: linear-gradient(135deg, #7f00ff, #ff007f);
-                color: white;
-                padding: 12px 30px;
+            .search-box textarea {
+                background: transparent;
                 border: none;
-                border-radius: 25px;
-                font-size: 16px;
+                color: #ffffff;
+                resize: none;
+                font-size: 1.1rem;
+                outline: none;
+                width: 100%;
+                height: 80px;
+            }
+            .search-box textarea::placeholder {
+                color: #796693;
+            }
+            .search-btn {
+                background: #7c4dff;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 12px;
                 font-weight: bold;
                 cursor: pointer;
+                align-self: flex-end;
                 transition: 0.3s;
             }
-
-            .send-btn:hover {
-                transform: scale(1.05);
-                box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+            .search-btn:hover {
+                background: #651fff;
+                transform: translateY(-2px);
+            }
+            .options-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                width: 100%;
+            }
+            .option-card {
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
+                padding: 20px 10px;
+                cursor: pointer;
+                transition: 0.3s;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            .option-card:hover {
+                background: rgba(124, 77, 255, 0.15);
+                border-color: #7c4dff;
+                transform: translateY(-3px);
+            }
+            .icon {
+                font-size: 1.5rem;
+            }
+            .option-title {
+                font-size: 0.9rem;
+                font-weight: 500;
+                color: #e0d8f0;
+            }
+            .response-box {
+                margin-top: 20px;
+                padding: 15px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                border: 1px solid rgba(179, 136, 255, 0.2);
+                display: none;
+                text-align: left;
+                color: #e0d8f0;
+            }
+            @media (max-width: 480px) {
+                .options-grid {
+                    grid-template-columns: 1fr;
+                }
+                h1 {
+                    font-size: 1.8rem;
+                }
             }
         </style>
     </head>
     <body>
-
-        <!-- टॉप सर्च/लोडिंग लाइन -->
-        <div id="top-loading-bar"></div>
-
-        <!-- पहला पेज (होम/चैट स्क्रीन का विकल्प) -->
-        <div id="home-page" class="page">
-            <h2>Select an Option to Build</h2>
-            <div class="button-container">
-                <button class="action-btn btn-create" onclick="triggerPageTransition('Web Design')">Create Web</button>
-                <button class="action-btn btn-edit" onclick="triggerPageTransition('Edit Web')">Edit Web</button>
-                <button class="action-btn btn-video" onclick="triggerPageTransition('Video AI')">Video AI</button>
+        <div class="container">
+            <h1>Chatbot Studio AI</h1>
+            <p>What would you like to create today?</p>
+            
+            <div class="search-box">
+                <textarea id="userInput" placeholder="Describe what you have to build..."></textarea>
+                <button class="search-btn" onclick="generateResponse()">Generate</button>
             </div>
-        </div>
-
-        <!-- नया फैंसी पर्पल पेज -->
-        <div id="studio-page" class="page hidden">
-            <div class="studio-container">
-                <h1>Describe what you have to build</h1>
-                <textarea class="prompt-box" placeholder="Type your design requirements here..."></textarea>
-                <button class="send-btn" onclick="submitPrompt()">Generate ✨</button>
+            
+            <div class="options-grid">
+                <div class="option-card" onclick="selectOption('Web Design')">
+                    <div class="icon">🌐</div>
+                    <div class="option-title">Web Design</div>
+                </div>
+                <div class="option-card" onclick="selectOption('Video Editor')">
+                    <div class="icon">🎬</div>
+                    <div class="option-title">Video Editor</div>
+                </div>
+                <div class="option-card" onclick="selectOption('AI Agent')">
+                    <div class="icon">🤖</div>
+                    <div class="option-title">AI Agent</div>
+                </div>
             </div>
+
+            <div id="responseBox" class="response-box"></div>
         </div>
 
         <script>
-            function triggerPageTransition(modeName) {
-                const loadingBar = document.getElementById('top-loading-bar');
-                const homePage = document.getElementById('home-page');
-                const studioPage = document.getElementById('studio-page');
-                
-                loadingBar.style.width = '40%';
-                
-                setTimeout(() => { loadingBar.style.width = '80%'; }, 200);
-                setTimeout(() => { loadingBar.style.width = '100%'; }, 400);
-
-                setTimeout(() => {
-                    homePage.classList.add('hidden');
-                    studioPage.classList.remove('hidden');
-                    loadingBar.style.width = '0%';
-                }, 700);
+            function generateResponse() {
+                const input = document.getElementById('userInput').value;
+                const responseBox = document.getElementById('responseBox');
+                if(input.trim() === "") {
+                    alert("Please write something first!");
+                    return;
+                }
+                responseBox.style.display = "block";
+                responseBox.innerHTML = "<strong>AI Response:</strong> Working on creating: " + input;
             }
 
-            function submitPrompt() {
-                alert("Prompt submitted! Connecting to Python backend...");
-                // भविष्य में बैकएंड API से कनेक्ट करने का कोड यहाँ आएगा
+            function selectOption(optionName) {
+                document.getElementById('userInput').value = "Help me build a " + optionName;
             }
         </script>
     </body>
     </html>
     """
     return html_content
-
-# 2. बैकएंड प्रोसेसिंग के लिए API रूट (भविष्य में काम आएगा)
-@app.post("/generate")
-async def generate_response(prompt: str):
-    return {"status": "success", "message": f"Processing prompt: {prompt}"}
-
+    
