@@ -1,11 +1,9 @@
 import os
-import requests
-from flask import Flask, request, jsonify, render_template_string
-from urllib.parse import quote
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-# सुंदर और रिस्पॉन्सिव चैट डिज़ाइन (HTML + CSS + JS)
+# सुंदर और रिस्पॉन्सिव चैट डिज़ाइन (इसमें AI सीधे आपके फोन से कनेक्ट होगा)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -31,7 +29,7 @@ HTML_TEMPLATE = """
 <div class="chat-container">
     <div class="chat-header">मेरा असली AI चैटबॉट</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot-msg">नमस्ते! मैं आपका असली AI असिस्टेंट हूँ। अब आप मुझसे दुनिया का कोई भी सवाल पूछ सकते हैं, मैं हर सवाल का जवाब दूँगा!</div>
+        <div class="message bot-msg">नमस्ते! मैं आपका असली AI असिस्टेंट हूँ। अब आप मुझसे दुनिया का कोई भी सवाल पूछ सकते हैं, मैं हर सवाल का तुरंत जवाब दूँगा!</div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="यहाँ अपना कोई भी सवाल लिखें...">
@@ -50,18 +48,32 @@ HTML_TEMPLATE = """
         inputField.value = "";
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        fetch('/get', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message })
+        // सीधे आपके ब्राउज़र से फ्री AI API को कॉल करना (Render का सर्वर अब बीच में रुकावट नहीं बनेगा)
+        let promptWithInstruction = encodeURIComponent(message + " (कृपया इसका उत्तर हमेशा सरल हिंदी भाषा में विस्तार से दें)");
+        let apiUrl = `https://pollinations.ai{promptWithInstruction}`;
+
+        // बोट टाइपिंग इंडिकेटर दिखाएं
+        let loadingId = "loading_" + Date.now();
+        chatBox.innerHTML += `<div class="message bot-msg" id="${loadingId}">सोच रहा हूँ...</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        fetch(apiUrl)
+        .then(response => {
+            if(response.ok) {
+                return response.text();
+            } else {
+                throw new Error("API Network error");
+            }
         })
-        .then(response => response.json())
-        .then(data => {
-            chatBox.innerHTML += `<div class="message bot-msg">${data.response}</div>`;
+        .then(text => {
+            // 'सोच रहा हूँ...' को असली जवाब से बदलें
+            document.getElementById(loadingId).innerText = text;
             chatBox.scrollTop = chatBox.scrollHeight;
         })
         .catch(error => {
             console.error('Error:', error);
+            document.getElementById(loadingId).innerText = "माफ़ कीजिये, रिस्पॉन्स मिलने में समस्या हुई। कृपया दोबारा प्रयास करें।";
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
     }
 </script>
@@ -72,41 +84,6 @@ HTML_TEMPLATE = """
 @app.route('/')
 def home():
     return render_template_string(HTML_TEMPLATE)
-
-@app.route('/get', methods=['POST'])
-def bot_response():
-    try:
-        data = request.get_json()
-        user_message = data.get("message", "").strip() if data else ""
-        
-        if not user_message:
-            user_message = request.form.get('msg', '').strip()
-
-        if not user_message:
-            return jsonify({"response": "कृपया कुछ टाइप करें..."})
-
-        # AI को निर्देश देना ताकि वह हमेशा हिंदी भाषा में बेहतरीन जवाब दे
-        prompt_with_instruction = f"{user_message} (कृपया इसका उत्तर सरल हिंदी भाषा में विस्तार से दें)"
-        
-        # यूआरएल को सुरक्षित फॉर्मेट (URL Encode) में बदलना
-        encoded_prompt = quote(prompt_with_instruction)
-        
-        # 100% फ्री और सुपरफास्ट GET API URL
-        api_url = f"https://text.pollinations.ai/{encoded_prompt}"
-        
-        # बाहरी AI सर्वर से जवाब प्राप्त करना
-        response = requests.get(api_url)
-        
-        if response.status_code == 200:
-            ai_response = response.text  # सीधे टेक्स्ट रिस्पॉन्स प्राप्त करना
-        else:
-            ai_response = "माफ़ कीजिये, अभी रिस्पॉन्स मिलने में थोड़ी देरी हो रही है। कृपया एक बार फिर प्रयास करें।"
-
-        return jsonify({"response": ai_response})
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"response": "सर्वर में कुछ तकनीकी समस्या है, कृपया दोबारा प्रयास करें।"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
