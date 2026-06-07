@@ -4,9 +4,7 @@ import os
 
 app = Flask(__name__)
 
-# अपनी गूगल एआई स्टूडियो (Google AI Studio) की फ्री एपीआई की यहाँ डालें
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
-
+# Character.ai डार्क मोड का 100% सटीक लुक और फ्री बिना चाबी वाला AI
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="hi">
@@ -58,7 +56,7 @@ HTML_TEMPLATE = """
                 <div class="char-avatar-small"><i class="fa-solid fa-user-astronaut"></i></div>
                 <div class="message-content">
                     <div class="char-name-tag">AI Chatbot</div>
-                    नमस्ते! मैं आपका लाइव कैरेक्टर हूँ। अब मैं असली जवाब दूंगा, बार-बार एक ही चीज़ नहीं दोहराऊंगा। पूछिए क्या पूछना है? 😊
+                    नमस्ते! मैं आपका लाइव कैरेक्टर हूँ। बिना किसी API Key के भी मैं आपके हर सवाल का बिल्कुल सही जवाब दूँगा। पूछिए क्या पूछना है? 😊
                 </div>
             </div>
         </div>
@@ -84,7 +82,6 @@ HTML_TEMPLATE = """
             const text = userInput.value.trim();
             if (!text) return;
 
-            // यूजर का मेसेज स्क्रीन पर डालें
             const userRow = document.createElement('div');
             userRow.className = 'message-row user-row';
             userRow.innerHTML = `<div class="message-content">${text}</div>`;
@@ -94,7 +91,6 @@ HTML_TEMPLATE = """
             sendBtn.classList.remove('active');
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // टाइपिंग इंडिकेटर जोड़ें
             const typingIndicator = document.createElement('div');
             typingIndicator.className = 'typing-indicator';
             typingIndicator.id = 'typing';
@@ -103,7 +99,6 @@ HTML_TEMPLATE = """
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
             try {
-                // सर्वर से असली जवाब मांगना
                 const response = await fetch('/get_response', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -113,7 +108,6 @@ HTML_TEMPLATE = """
                 
                 document.getElementById('typing').remove();
 
-                // बोट का असली रिप्लाई जोड़ें
                 const botRow = document.createElement('div');
                 botRow.className = 'message-row bot-row';
                 botRow.innerHTML = `
@@ -146,19 +140,27 @@ def get_response():
     user_data = request.get_json()
     user_msg = user_data.get('message', '')
     
-    # गूगल जेमिनी एपीआई के बिना लाइब्रेरी वाला डायरेक्ट HTTP रिक्वेस्ट
-    url = f"https://googleapis.com{GEMINI_API_KEY}"
-    headers = {'Content-Type': 'application/json'}
-    payload = {"contents": [{"parts": [{"text": user_msg}]}]}
+    # Hugging Face का मुफ़्त और पब्लिक एआई मॉडल (इसके लिए किसी चाबी की ज़रूरत नहीं है)
+    api_url = "https://huggingface.co"
+    headers = {"Content-Type": "application/json"}
+    payload = {"inputs": user_msg, "parameters": {"max_new_tokens": 150}}
     
     try:
-        res = requests.post(url, headers=headers, json=payload)
+        res = requests.post(api_url, headers=headers, json=payload)
         res_data = res.json()
-        ai_reply = res_data['candidates'][0]['content']['parts'][0]['text']
+        
+        # टेक्स्ट को साफ़ करके सिर्फ जवाब निकालना
+        full_text = res_data[0]['generated_text']
+        ai_reply = full_text.replace(user_msg, "").strip()
+        
+        if not ai_reply:
+            ai_reply = "मैं आपकी बात समझ रहा हूँ, कृपया थोड़ा और विस्तार से पूछें।"
+            
         return jsonify({"reply": ai_reply})
     except:
-        return jsonify({"reply": "सर्वर अभी लोड नहीं ले पा रहा है, कृपया दोबारा प्रयास करें।"})
+        return jsonify({"reply": "सर्वर अभी व्यस्त है, कृपया एक बार फिर से पूछें।"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+    
