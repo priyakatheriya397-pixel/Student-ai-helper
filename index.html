@@ -1,82 +1,146 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free AI & Learning Tools</title>
-    <link href="https://googleapis.com" rel="stylesheet">
+    <title>Chatbot Interface</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #f8f9fa; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-        header { width: 100%; max-width: 600px; text-align: center; margin-top: 20px; margin-bottom: 40px; }
-        header h1 { font-size: 24px; color: #4a148c; font-weight: 700; margin-bottom: 8px; }
-        header p { font-size: 14px; color: #666; }
-        .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; max-width: 600px; margin-bottom: 30px; }
-        .tool-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .tool-card:hover { transform: translateY(-4px); border-color: #7c4dff; box-shadow: 0 8px 16px rgba(124, 77, 255, 0.1); }
-        .tool-icon { font-size: 32px; margin-bottom: 12px; display: inline-block; }
-        .tool-name { font-size: 14px; font-weight: 600; color: #424242; }
-        
-        /* आपकी पर्पल स्क्रीन/थीम वाला मुख्य चैट बॉक्स एरिया */
-        .workspace-container { width: 100%; max-width: 600px; background: #ffffff; border-radius: 16px; border: 1px solid #e0e0e0; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
-        .welcome-text { background-color: #f3e5f5; color: #4a148c; padding: 15px; border-radius: 10px; font-size: 14px; line-height: 1.5; margin-bottom: 25px; font-weight: 500; text-align: center; }
-        
-        .input-group { display: flex; gap: 10px; }
-        .question-input { flex: 1; padding: 14px 18px; border: 1px solid #cccccc; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; }
-        .question-input:focus { border-color: #7c4dff; }
-        
-        /* पर्पल आस्किंग बटन */
-        .ask-btn { background-color: #7c4dff; color: white; border: none; padding: 0 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .ask-btn:hover { background-color: #651fff; }
-        @media (max-width: 480px) { .tools-grid { grid-template-columns: 1fr; } .input-group { flex-direction: column; } .ask-btn { padding: 14px; } }
+        body {
+            background-color: #0d0d11;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        /* Top Header */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: #16161f;
+            border-bottom: 1px solid #23232f;
+        }
+        .back-btn {
+            font-size: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            margin-right: 12px;
+        }
+        .user-info .name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .user-info .status {
+            font-size: 12px;
+            color: #8b5cf6;
+        }
+        /* Chat Area */
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+        .incoming {
+            background-color: #1c1c27;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        /* 3 Web Design Buttons */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .action-btn {
+            background-color: #252538;
+            color: #ffffff;
+            border: 1px solid #3f3f56;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .action-btn:hover {
+            background-color: #313149;
+            border-color: #8b5cf6;
+        }
+        /* Input Footer */
+        .footer {
+            padding: 15px;
+            background-color: #16161f;
+            border-top: 1px solid #23232f;
+        }
+        .input-box {
+            width: 100%;
+            background-color: #0d0d11;
+            border: 1px solid #3f3f56;
+            color: white;
+            padding: 12px;
+            border-radius: 25px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Smart Study Workspace</h1>
-        <p>Learn Web Design, Edit Videos, and Ask AI anything for Free</p>
-    </header>
-    
-    <!-- वेब डिज़ाइन वाले तीनों ऑप्शन -->
-    <div class="tools-grid">
-        <div class="tool-card" onclick="selectTool('Web Design')">
-            <span class="tool-icon">💻</span>
-            <div class="tool-name">Web Design</div>
-        </div>
-        <div class="tool-card" onclick="selectTool('Video Editor')">
-            <span class="tool-icon">🎬</span>
-            <div class="tool-name">Video Editor</div>
-        </div>
-        <div class="tool-card" onclick="selectTool('AI Tutor')">
-            <span class="tool-icon">🤖</span>
-            <div class="tool-name">AI Tutor</div>
+
+    <!-- Header (Chatbot नाम के साथ) -->
+    <div class="header">
+        <div class="back-btn">←</div>
+        <div class="avatar"></div>
+        <div class="user-info">
+            <div class="name">Chatbot</div>
+            <div class="status">online</div>
         </div>
     </div>
-    
-    <!-- आस्किंग चैट बॉक्स -->
-    <div class="workspace-container">
-        <div class="welcome-text" id="welcomeMessage">
-            👋 Welcome! Please click on any option above or type your homework question below! 🚀
-        </div>
-        <div class="input-group">
-            <input type="text" class="question-input" id="userInput" placeholder="Type your question here...">
-            <button class="ask-btn" onclick="submitQuestion()">Ask AI</button>
+
+    <!-- Chat Screen -->
+    <div class="chat-container">
+        <div class="message incoming">
+            नमस्ते! मैं आपका AI असिस्टेंट हूँ। नीचे दिए गए वेब डिज़ाइन विकल्पों में से किसी एक को चुनें:
+            
+            <!-- Web Design के 3 चालू बटन -->
+            <div class="button-group">
+                <button class="action-btn" onclick="selectOption('Create New Web Layout')">🌐 Web Design: Create Layout</button>
+                <button class="action-btn" onclick="selectOption('Change Theme & Colors')">🎨 Web Design: Theme & Colors</button>
+                <button class="action-btn" onclick="selectOption('Optimize Performance')">⚡ Web Design: Optimize</button>
+            </div>
         </div>
     </div>
-    
+
+    <!-- Input Area -->
+    <div class="footer">
+        <input type="text" id="chatInput" class="input-box" placeholder="Message...">
+    </div>
+
     <script>
-        function selectTool(toolName) {
-            const messageBox = document.getElementById('welcomeMessage');
-            messageBox.innerHTML = `🎯 You have selected <b>${toolName}</b>. Type your topic or requirement below to start!`;
-            document.getElementById('userInput').placeholder = `Ask about ${toolName}...`;
-        }
-        function submitQuestion() {
-            const inputVal = document.getElementById('userInput').value;
-            if(inputVal.trim() === "") { alert("Please enter a question first!"); return; }
-            alert("Your question: '" + inputVal + "' has been submitted successfully!");
-            document.getElementById('userInput').value = "";
+        // बटन क्लिक होने पर इनपुट बॉक्स में टेक्स्ट भेजने के लिए फंक्शन
+        function selectOption(optionText) {
+            document.getElementById('chatInput').value = "Web Design: " + optionText;
         }
     </script>
+
 </body>
 </html>
-
