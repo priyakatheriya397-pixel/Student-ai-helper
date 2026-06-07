@@ -38,6 +38,7 @@ HTML_LAYOUT = """<!DOCTYPE html>
         .send-btn { background-color: #27272a; border: none; color: #a1a1aa; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; cursor: pointer; }
         .send-btn.active { background-color: #ffffff; color: #000000; }
         .ai-disclaimer { text-align: center; font-size: 11px; color: #71717a; padding-bottom: 12px; background-color: #0c0c0e; display: flex; justify-content: center; align-items: center; gap: 4px; }
+        .typing { color: #71717a; font-style: italic; font-size: 13px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -95,6 +96,13 @@ HTML_LAYOUT = """<!DOCTYPE html>
             sendBtn.classList.remove('active');
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerText = "typing...";
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
             try {
                 const response = await fetch('/get_response', {
                     method: 'POST',
@@ -103,13 +111,17 @@ HTML_LAYOUT = """<!DOCTYPE html>
                 });
                 const data = await response.json();
 
+                document.getElementById('typingIndicator').remove();
+
                 const botBlock = document.createElement('div');
                 botBlock.className = 'message-row';
                 botBlock.innerHTML = '<div class="bot-text-block">' + data.reply + '</div><div class="bot-action-bar"><i class="fa-regular fa-square-plus"></i><i class="fa-solid fa-rotate-right"></i></div>';
                 
                 chatMessages.appendChild(botBlock);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-            } catch (e) { }
+            } catch (e) {
+                document.getElementById('typingIndicator').remove();
+            }
         }
         sendBtn.addEventListener('click', sendMessage);
         userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
@@ -126,22 +138,23 @@ def get_response():
     user_data = request.get_json()
     user_msg = user_data.get('message', '')
     
-    # मुफ़्त और पब्लिक AI मॉडल जो बिना किसी API Key के हर सवाल का असली जवाब देगा
-    api_url = "https://huggingface.co"
-    headers = {"Content-Type": "application/json"}
-    payload = {"inputs": user_msg, "parameters": {"max_new_tokens": 100}}
+    # बिल्कुल नया, मुफ़्त और बिना चाबी वाला पब्लिक AI सर्वर (No API Key Required)
+    url = "https://openrouter.ai"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "meta-llama/llama-3.2-1b-instruct:free",
+        "messages": [{"role": "user", "content": user_msg}]
+    }
     
     try:
-        res = requests.post(api_url, headers=headers, json=payload)
+        res = requests.post(url, headers=headers, json=payload)
         res_data = res.json()
-        full_text = res_data[0]['generated_text']
-        ai_reply = full_text.replace(user_msg, "").strip()
-        
-        if not ai_reply:
-            ai_reply = "I am processing your question. Please try asking again!"
+        ai_reply = res_data['choices'][0]['message']['content'].strip()
         return jsonify({"reply": ai_reply})
     except:
-        return jsonify({"reply": "Server is busy answering users. Please try again in a moment!"})
+        return jsonify({"reply": "I am working on your answer. Please ask again!"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
