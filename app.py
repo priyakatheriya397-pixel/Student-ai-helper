@@ -1,10 +1,9 @@
 import os
+import requests
 from flask import Flask, request, jsonify, render_template_string
-from duckduckgo_search import DDGS
 
 app = Flask(__name__)
 
-# चैटबॉट का पूरा डिज़ाइन (HTML)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +16,7 @@ HTML_TEMPLATE = """
         .chat-container { width: 90%; max-width: 400px; background: white; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; height: 80vh; }
         .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
         .chat-box { padding: 15px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { padding: 10px; border-radius: 5px; max-width: 75%; word-wrap: break-word; font-size: 14px; }
+        .message { padding: 10px; border-radius: 5px; max-width: 75%; word-wrap: break-word; font-size: 14px; line-height: 1.4; }
         .user-msg { background: #007bff; color: white; align-self: flex-end; }
         .bot-msg { background: #e9ecef; color: #333; align-self: flex-start; }
         .input-area { display: flex; border-top: 1px solid #ddd; }
@@ -30,7 +29,7 @@ HTML_TEMPLATE = """
 <div class="chat-container">
     <div class="chat-header">मेरा AI चैटबॉट</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot-msg">नमस्ते! मैं आपका AI चैटबॉट हूँ। पूछिए, आज आपको क्या जानना है?</div>
+        <div class="message bot-msg">नमस्ते! मैं आपका स्मार्ट चैटबॉट हूँ। कुछ भी पूछिए (जैसे: What is AI, What is bacteria)!</div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="यहाँ अपना सवाल लिखें...">
@@ -84,18 +83,38 @@ def bot_response():
         if not user_message:
             return jsonify({"response": "कृपया कुछ टाइप करें..."})
 
-        # फ्री अनलिमिटेड AI मॉडल (GPT-4o-mini) से जवाब पाना
-        with DDGS() as ddgs:
-            # हम बोट को हिंदी/इंग्लिश दोनों समझने के लिए प्रॉम्प्ट दे रहे हैं
-            full_prompt = f"Respond helpful and accurately. User question: {user_message}"
-            response = ddgs.chat(full_prompt, model="gpt-4o-mini")
-            ai_response = response
+        clean_msg = user_message.lower()
+
+        # 1. सामान्य बातचीत के लिए तुरंत जवाब
+        if clean_msg in ["hi", "hello", "hey", "नमस्ते"]:
+            return jsonify({"response": "नमस्ते! मैं बिल्कुल तैयार हूँ। आज आप क्या सीखना या जानना चाहते हैं?"})
+        elif "how are you" in clean_msg or "kaise ho" in clean_msg:
+            return jsonify({"response": "मैं एकदम बढ़िया हूँ! आप बताइए, आज इंटरनेट से आपके लिए क्या ढूंढ कर लाऊँ?"})
+
+        # 2. ज्ञान वाले सवालों के लिए विकिपीडिया सर्च (जैसे What is AI, What is bacteria)
+        # सवाल में से फालतू शब्द हटाकर मुख्य टॉपिक निकालना
+        search_query = user_message
+        for word in ["what is a ", "what is an ", "what is ", "define ", "who is ", "kya hai"]:
+            if clean_msg.startswith(word):
+                search_query = user_message[len(word):].strip()
+                break
+        
+        # विकिपीडिया फ्री API से डेटा लाना
+        wiki_url = f"https://wikipedia.org{search_query.replace(' ', '_')}"
+        headers = {'User-Agent': 'MyChatBotApp/1.0 (contact@example.com)'}
+        
+        response = requests.get(wiki_url, headers=headers)
+        
+        if response.status_code == 200:
+            wiki_data = response.json()
+            ai_response = wiki_data.get('extract', 'मुझे इसके बारे में जानकारी तो मिली पर मैं समझा नहीं पाया।')
+        else:
+            ai_response = f"माफ़ कीजिये, मुझे '{search_query}' के बारे में कोई सटीक जानकारी नहीं मिली। कृपया सरल शब्दों में दोबारा पूछें।"
 
         return jsonify({"response": ai_response})
 
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"response": "माफ़ कीजिये, अभी सर्वर व्यस्त है। कृपया दोबारा प्रयास करें।"})
+        return jsonify({"response": "सर्वर में कुछ तकनीकी दिक्कत है, कृपया दोबारा प्रयास करें।"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
