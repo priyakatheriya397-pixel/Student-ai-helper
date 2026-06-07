@@ -138,25 +138,47 @@ def get_response():
     user_data = request.get_json()
     user_msg = user_data.get('message', '')
     
-    # बिल्कुल नया, मुफ़्त और बिना चाबी वाला पब्लिक AI सर्वर (No API Key Required)
-    url = "https://openrouter.ai"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "meta-llama/llama-3.2-1b-instruct:free",
-        "messages": [{"role": "user", "content": user_msg}]
-    }
+    # बिना किसी चाबी (API Key) वाला DuckDuckGo AI रूट
+    init_url = "https://duckduckgo.com"
+    chat_url = "https://duckduckgo.com"
+    headers = {"x-vqd-accept": "1", "User-Agent": "Mozilla/5.0"}
     
     try:
-        res = requests.post(url, headers=headers, json=payload)
-        res_data = res.json()
-        ai_reply = res_data['choices'][0]['message']['content'].strip()
+        # 1. बिना चाबी के टोकन (VQD) जनरेट करना
+        init_res = requests.get(init_url, headers=headers)
+        vqd_token = init_res.headers.get("x-vqd-token")
+        
+        # 2. असली AI जवाब मंगाना (Llama 3 मॉडल)
+        chat_headers = {"x-vqd-token": vqd_token, "Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
+        payload = {
+            "model": "meta-llama/Llama-3-70b-instruct",
+            "messages": [{"role": "user", "content": user_msg}]
+        }
+        
+        res = requests.post(chat_url, headers=chat_headers, json=payload)
+        
+        # रिस्पांस को साफ़ करके टेक्स्ट निकालना
+        lines = res.text.split("\n")
+        reply_parts = []
+        for line in lines:
+            if line.startswith("data:"):
+                import json
+                try:
+                    data_json = json.loads(line[5:])
+                    if "message" in data_json:
+                        reply_parts.append(data_json["message"])
+                except:
+                    pass
+        
+        ai_reply = "".join(reply_parts).strip()
+        if not ai_reply:
+            ai_reply = "Please try asking your question again!"
+            
         return jsonify({"reply": ai_reply})
     except:
-        return jsonify({"reply": "I am working on your answer. Please ask again!"})
+        return jsonify({"reply": "Answering error. Please try again in a few seconds."})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-    
+        
