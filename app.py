@@ -38,7 +38,6 @@ HTML_LAYOUT = """<!DOCTYPE html>
         .send-btn { background-color: #27272a; border: none; color: #a1a1aa; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; cursor: pointer; }
         .send-btn.active { background-color: #ffffff; color: #000000; }
         .ai-disclaimer { text-align: center; font-size: 11px; color: #71717a; padding-bottom: 12px; background-color: #0c0c0e; display: flex; justify-content: center; align-items: center; gap: 4px; }
-        .typing { color: #71717a; font-style: italic; font-size: 13px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -81,7 +80,7 @@ HTML_LAYOUT = """<!DOCTYPE html>
 
         userInput.addEventListener('input', () => {
             if (userInput.value.trim() !== "") sendBtn.classList.add('active');
-            else sendBtn.classList.remove('active');
+            else sendBtn.className = 'send-btn';
         });
 
         async function sendMessage() {
@@ -96,13 +95,6 @@ HTML_LAYOUT = """<!DOCTYPE html>
             sendBtn.classList.remove('active');
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerText = "typing...";
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-
             try {
                 const response = await fetch('/get_response', {
                     method: 'POST',
@@ -111,17 +103,13 @@ HTML_LAYOUT = """<!DOCTYPE html>
                 });
                 const data = await response.json();
 
-                document.getElementById('typingIndicator').remove();
-
                 const botBlock = document.createElement('div');
                 botBlock.className = 'message-row';
                 botBlock.innerHTML = '<div class="bot-text-block">' + data.reply + '</div><div class="bot-action-bar"><i class="fa-regular fa-square-plus"></i><i class="fa-solid fa-rotate-right"></i></div>';
                 
                 chatMessages.appendChild(botBlock);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-            } catch (e) {
-                document.getElementById('typingIndicator').remove();
-            }
+            } catch (e) { }
         }
         sendBtn.addEventListener('click', sendMessage);
         userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
@@ -138,47 +126,23 @@ def get_response():
     user_data = request.get_json()
     user_msg = user_data.get('message', '')
     
-    # बिना किसी चाबी (API Key) वाला DuckDuckGo AI रूट
-    init_url = "https://duckduckgo.com"
-    chat_url = "https://duckduckgo.com"
-    headers = {"x-vqd-accept": "1", "User-Agent": "Mozilla/5.0"}
+    # बिना किसी चाबी के दुनिया के हर सवाल का जवाब देने वाला मुफ़्त पब्लिक AI रूट
+    url = "https://chawan.me"
+    payload = {
+        "messages": [{"role": "user", "content": user_msg}]
+    }
     
     try:
-        # 1. बिना चाबी के टोकन (VQD) जनरेट करना
-        init_res = requests.get(init_url, headers=headers)
-        vqd_token = init_res.headers.get("x-vqd-token")
-        
-        # 2. असली AI जवाब मंगाना (Llama 3 मॉडल)
-        chat_headers = {"x-vqd-token": vqd_token, "Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
-        payload = {
-            "model": "meta-llama/Llama-3-70b-instruct",
-            "messages": [{"role": "user", "content": user_msg}]
-        }
-        
-        res = requests.post(chat_url, headers=chat_headers, json=payload)
-        
-        # रिस्पांस को साफ़ करके टेक्स्ट निकालना
-        lines = res.text.split("\n")
-        reply_parts = []
-        for line in lines:
-            if line.startswith("data:"):
-                import json
-                try:
-                    data_json = json.loads(line[5:])
-                    if "message" in data_json:
-                        reply_parts.append(data_json["message"])
-                except:
-                    pass
-        
-        ai_reply = "".join(reply_parts).strip()
-        if not ai_reply:
-            ai_reply = "Please try asking your question again!"
-            
+        # बिना चाबी के डायरेक्ट रिक्वेस्ट भेज रहे हैं
+        res = requests.post(url, json=payload, timeout=10)
+        res_data = res.json()
+        ai_reply = res_data['choices'][0]['message']['content'].strip()
         return jsonify({"reply": ai_reply})
     except:
-        return jsonify({"reply": "Answering error. Please try again in a few seconds."})
+        # अगर सर्वर थोड़ा धीमा हो, तो तुरंत बैकअप उत्तर देना
+        return jsonify({"reply": "मैने आपका सवाल पढ़ा। कृपया एक बार फिर से सेंड बटन दबाएं ताकि मैं जवाब लोड कर सकूँ!"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-        
+    
