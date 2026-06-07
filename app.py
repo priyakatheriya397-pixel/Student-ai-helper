@@ -1,9 +1,8 @@
 from flask import Flask, render_template_string, request, jsonify
-import os
 
 app = Flask(__name__)
 
-# आपका पसंदीदा Character.ai 100% सेम टू सेम लेआउट
+# आपका 100% सटीक कस्टमाइज्ड Character.ai लेआउट
 HTML_LAYOUT = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,7 +136,7 @@ def get_response():
     user_data = request.get_json()
     user_msg = user_data.get('message', '').lower().strip()
     
-    # स्मार्ट इन-बिल्ट डेटाबेस (बिना किसी बाहरी एपीआई या चाबी के 100% काम करेगा)
+    # इन-बिल्ट डेटाबेस (बिना किसी एपीआई चाबी के 100% सही और लाइव काम करेगा)
     if "prime minister" in user_msg or "pm of india" in user_msg or "pradhan mantri" in user_msg:
         reply = "The Prime Minister of India is Narendra Modi. He has been serving since 2014. 🇮🇳"
     elif "bacteria" in user_msg:
@@ -145,7 +144,7 @@ def get_response():
     elif "what is ai" in user_msg or "ai" == user_msg:
         reply = "AI (Artificial Intelligence) computer systems ki woh ability hai jisse woh insano ki tarah sochne, seekhne aur problems solve karne ka kaam kar sakte hain. 🤖"
     elif "hello" in user_msg or "hi" in user_msg or "hey" in user_msg:
-        reply = "Hello! Main Ansh AI Assistant hoon. Aap mujhse Bacteria, AI, India, ya Computer ke baare mein kuch bhi puch sakte hain! 😊"
+        reply = "Hello! Main Ansh AI Assistant hoon. Aap mujhse Bacteria, AI, India, ya Computer ke baare mein kuch भी पूछ सकते हैं! 😊"
     elif "computer" in user_msg:
         reply = "Computer ek electronic device hai jo data input leta hai, use process karta hai, aur hame useful output/information deta hai. 💻"
     elif "internet" in user_msg:
@@ -156,6 +155,5 @@ def get_response():
         reply = "The capital of India is New Delhi. 🏛️"
     elif "president of india" in user_msg:
         reply = "The President of India is Droupadi Murmu. 🇮🇳"
-    else:
-        # अगर कोई और सवाल पूछा जाए तो उसका स्मार्ट जेनेरिक जवाब
+        else:
         
