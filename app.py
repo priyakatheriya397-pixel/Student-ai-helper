@@ -89,41 +89,63 @@ def chat():
 
         user_message = data['message']
         
-        # Pollinations का नया और सही OpenAI-compatible JSON एंडपॉइंट
-        api_url = "https://pollinations.ai"
+        # 1. DuckDuckGo AI की टोकन सर्विस से वरीफिकेशन पास प्राप्त करना
+        status_url = "https://duckduckgo.com"
+        headers = {"x-vqd-accept": "1", "User-Agent": "Mozilla/5.0"}
         
-        headers = {
-            "Content-Type": "application/json"
+        status_res = requests.get(status_url, headers=headers, timeout=10)
+        vqd_token = status_res.headers.get("x-vqd-token")
+        
+        if not vqd_token:
+            return jsonify({"reply": "सर्वर गेटवे टोकन नहीं बना सका। कृपया पुनः प्रयास करें।"})
+
+        # 2. एआई चैट सर्विस को डेटा पोस्ट करना (Llama-3 मॉडल का उपयोग)
+        chat_url = "https://duckduckgo.com"
+        chat_headers = {
+            "x-vqd-token": vqd_token,
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0"
         }
         
-        # इसमें बिना किसी चाबी (Key) के मुफ्त में चैट चलती है
         payload = {
-            "model": "openai", 
-            "messages": [
-                {"role": "system", "content": "You are a helpful AI assistant who answers in the language chosen by the user."},
-                {"role": "user", "content": user_message}
-            ]
+            "model": "meta-llama/Meta-Llama-3-70B-Instruct-Turbo",
+            "messages": [{"role": "user", "content": user_message}]
         }
         
-        # रिक्वेस्ट भेज रहे हैं
-        response = requests.post(api_url, json=payload, headers=headers, timeout=20)
+        # सरलीकृत और सटीक स्ट्रीमिंग रिस्पॉन्स पार्सिंग
+        response = requests.post(chat_url, json=payload, headers=chat_headers, timeout=15)
         
         if response.status_code == 200:
-            result_json = response.json()
-            ai_reply = result_json['choices'][0]['message']['content']
-            return jsonify({"reply": ai_reply.strip()})
-        else:
-            # बैकअप: अगर मुख्य सर्वर में कोई दिक्कत हो तो सीधे टेक्स्ट बेस मॉडल पर भेजें
-            fallback_url = f"https://text.pollinations.ai/{user_message}?private=true"
-            res = requests.get(fallback_url, timeout=15)
-            if res.status_code == 200:
-                return jsonify({"reply": res.text.strip()})
+            full_reply = ""
+            # DuckDuckGo डेटा को Server-Sent Events (SSE) में भेजता है, उसे यहाँ जोड़ रहे हैं
+            for line in response.text.splitlines():
+                if line.startswith("data:"):
+                    data_content = line[5:].strip()
+                    if data_content == "[DONE]":
+                        break
+                    # टेक्स्ट चंक्स को साफ़ करना
+                    if '"message":"' in data_content:
+                        try:
+                            # सिंपल स्ट्रिंग स्लाइसिंग द्वारा टेक्स्ट निकालना ताकि JSON क्रैश न हो
+                            part = data_content.split('"message":"')[1].split('"')[0]
+                            # एस्केप कैरेक्टर्स को ठीक करना
+                            part = part.encode().decode('unicode_escape')
+                            full_reply += part
+                        except Exception:
+                            pass
+            
+            if full_reply.strip():
+                return jsonify({"reply": full_reply.strip()})
                 
-            return jsonify({"reply": "माफ़ कीजिये, फ्री एआई सर्वर अभी जवाब नहीं दे पा रहा है। थोड़ी देर में प्रयास करें।"})
+        # 3. अंतिम बैकअप (अगर DuckDuckGo भी ब्लॉक करे)
+        fallback_res = requests.get(f"https://pollinations.ai{user_message}?model=mistral", timeout=10)
+        if fallback_res.status_code == 200:
+            return jsonify({"reply": fallback_res.text.strip()})
+
+        return jsonify({"reply": "माफ़ कीजिये, सभी फ्री सर्वर अभी व्यस्त हैं। कृपया 1 मिनट बाद पुनः प्रयास करें।"})
 
     except Exception as e:
-        print(f"Error Log: {str(e)}")
-        return jsonify({"reply": f"बैकएंड एरर: {str(e)}"}), 500
+        return jsonify({"reply": f"तकनीकी त्रुटि: {str(e)}"}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
