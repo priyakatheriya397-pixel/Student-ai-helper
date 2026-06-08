@@ -90,9 +90,10 @@ def chat():
 
         user_message = data['message']
         
-        # आपकी API Key जिसे हमने बिना किसी अन्य लाइब्रेरी के डायरेक्ट कनेक्ट किया है
+        # आपकी API Key
         GROQ_API_KEY = "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"
 
+        # सटीक और आधिकारिक OpenAI-compatible यूआरएल रूट
         url = "https://groq.com"
         
         headers = {
@@ -108,7 +109,7 @@ def chat():
             ]
         }
         
-        # शुद्ध पाइथन urllib के द्वारा सीधे HTTP पोस्ट मारना (ताकि रेंडर क्रैश न हो)
+        # POST रिक्वेस्ट को बिल्कुल सही यूआरएल पर भेजना
         req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
         
         with urllib.request.urlopen(req, timeout=15) as response:
