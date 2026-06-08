@@ -6,6 +6,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+# फ्रंटएंड (HTML + CSS + JavaScript)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="hi">
@@ -89,60 +90,32 @@ def chat():
 
         user_message = data['message']
         
-        # 1. DuckDuckGo AI की टोकन सर्विस से वरीफिकेशन पास प्राप्त करना
-        status_url = "https://duckduckgo.com"
-        headers = {"x-vqd-accept": "1", "User-Agent": "Mozilla/5.0"}
-        
-        status_res = requests.get(status_url, headers=headers, timeout=10)
-        vqd_token = status_res.headers.get("x-vqd-token")
-        
-        if not vqd_token:
-            return jsonify({"reply": "सर्वर गेटवे टोकन नहीं बना सका। कृपया पुनः प्रयास करें।"})
+        # आपकी चाबी (API Key) यहाँ जोड़ दी गई है
+        GROQ_API_KEY = "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"
 
-        # 2. एआई चैट सर्विस को डेटा पोस्ट करना (Llama-3 मॉडल का उपयोग)
-        chat_url = "https://duckduckgo.com"
-        chat_headers = {
-            "x-vqd-token": vqd_token,
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0"
+        url = "https://groq.com"
+        
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
         }
         
         payload = {
-            "model": "meta-llama/Meta-Llama-3-70B-Instruct-Turbo",
-            "messages": [{"role": "user", "content": user_message}]
+            "model": "llama3-8b-8192",  # सुपर फ़ास्ट मॉडल
+            "messages": [
+                {"role": "system", "content": "You are a helpful AI assistant who always answers in Hindi language unless specified otherwise. Keep answers engaging and direct."},
+                {"role": "user", "content": user_message}
+            ]
         }
         
-        # सरलीकृत और सटीक स्ट्रीमिंग रिस्पॉन्स पार्सिंग
-        response = requests.post(chat_url, json=payload, headers=chat_headers, timeout=15)
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
         
         if response.status_code == 200:
-            full_reply = ""
-            # DuckDuckGo डेटा को Server-Sent Events (SSE) में भेजता है, उसे यहाँ जोड़ रहे हैं
-            for line in response.text.splitlines():
-                if line.startswith("data:"):
-                    data_content = line[5:].strip()
-                    if data_content == "[DONE]":
-                        break
-                    # टेक्स्ट चंक्स को साफ़ करना
-                    if '"message":"' in data_content:
-                        try:
-                            # सिंपल स्ट्रिंग स्लाइसिंग द्वारा टेक्स्ट निकालना ताकि JSON क्रैश न हो
-                            part = data_content.split('"message":"')[1].split('"')[0]
-                            # एस्केप कैरेक्टर्स को ठीक करना
-                            part = part.encode().decode('unicode_escape')
-                            full_reply += part
-                        except Exception:
-                            pass
-            
-            if full_reply.strip():
-                return jsonify({"reply": full_reply.strip()})
-                
-        # 3. अंतिम बैकअप (अगर DuckDuckGo भी ब्लॉक करे)
-        fallback_res = requests.get(f"https://pollinations.ai{user_message}?model=mistral", timeout=10)
-        if fallback_res.status_code == 200:
-            return jsonify({"reply": fallback_res.text.strip()})
-
-        return jsonify({"reply": "माफ़ कीजिये, सभी फ्री सर्वर अभी व्यस्त हैं। कृपया 1 मिनट बाद पुनः प्रयास करें।"})
+            result = response.json()
+            ai_reply = result['choices']['message']['content']
+            return jsonify({"reply": ai_reply.strip()})
+        else:
+            return jsonify({"reply": f"एआई सर्वर से त्रुटि आई है। कोड: {response.status_code}।"})
 
     except Exception as e:
         return jsonify({"reply": f"तकनीकी त्रुटि: {str(e)}"}), 500
