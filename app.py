@@ -1,6 +1,5 @@
 import os
 import requests
-import urllib.parse  # यूआरएल में स्पेस फिक्स करने के लिए
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 
@@ -48,7 +47,6 @@ HTML_TEMPLATE = """
             const text = input.value.trim();
             if (!text) return;
 
-            // इनपुट और बटन को डिसेबल करें ताकि डबल क्लिक न हो
             input.disabled = true;
             sendBtn.disabled = true;
 
@@ -68,7 +66,6 @@ HTML_TEMPLATE = """
                 chatBox.innerHTML += `<div class="message bot" style="color:red;">सर्वर से संपर्क नहीं हो पाया। कृपया पुनः प्रयास करें।</div>`;
             }
             
-            // दोबारा इनेबल करें
             input.disabled = false;
             sendBtn.disabled = false;
             input.focus();
@@ -92,31 +89,41 @@ def chat():
 
         user_message = data['message']
         
-        # यूआरएल में स्पेस या स्पेशल कैरेक्टर्स को एनकोड करना (ताकि सर्वर क्रैश न हो)
-        encoded_message = urllib.parse.quote(user_message)
+        # Pollinations का नया और सही OpenAI-compatible JSON एंडपॉइंट
+        api_url = "https://pollinations.ai"
         
-        # 1. पहला फ्री AI इंजन (Pollinations Text)
-        api_url = f"https://pollinations.ai{encoded_message}?model=openai"
+        headers = {
+            "Content-Type": "application/json"
+        }
         
-        try:
-            response = requests.get(api_url, timeout=15)
-            if response.status_code == 200 and response.text.strip():
-                return jsonify({"reply": response.text.strip()})
-        except Exception:
-            pass # अगर पहला डाउन है, तो दूसरे पर जाएगा
-
-        # 2. बैकअप फ्री AI इंजन (अगर पहला काम न करे)
-        backup_url = f"https://pollinations.ai{encoded_message}?model=mistral"
-        response = requests.get(backup_url, timeout=15)
+        # इसमें बिना किसी चाबी (Key) के मुफ्त में चैट चलती है
+        payload = {
+            "model": "openai", 
+            "messages": [
+                {"role": "system", "content": "You are a helpful AI assistant who answers in the language chosen by the user."},
+                {"role": "user", "content": user_message}
+            ]
+        }
         
-        if response.status_code == 200 and response.text.strip():
-            return jsonify({"reply": response.text.strip()})
+        # रिक्वेस्ट भेज रहे हैं
+        response = requests.post(api_url, json=payload, headers=headers, timeout=20)
+        
+        if response.status_code == 200:
+            result_json = response.json()
+            ai_reply = result_json['choices'][0]['message']['content']
+            return jsonify({"reply": ai_reply.strip()})
         else:
-            return jsonify({"reply": "माफ़ कीजिये, अभी कोई भी फ्री सर्वर रिस्पॉन्ड नहीं कर रहा है। थोड़ी देर बाद प्रयास करें।"})
+            # बैकअप: अगर मुख्य सर्वर में कोई दिक्कत हो तो सीधे टेक्स्ट बेस मॉडल पर भेजें
+            fallback_url = f"https://text.pollinations.ai/{user_message}?private=true"
+            res = requests.get(fallback_url, timeout=15)
+            if res.status_code == 200:
+                return jsonify({"reply": res.text.strip()})
+                
+            return jsonify({"reply": "माफ़ कीजिये, फ्री एआई सर्वर अभी जवाब नहीं दे पा रहा है। थोड़ी देर में प्रयास करें।"})
 
     except Exception as e:
         print(f"Error Log: {str(e)}")
-        return jsonify({"reply": "बैकएंड में कोई तकनीकी समस्या आई है।"}), 500
+        return jsonify({"reply": f"बैकएंड एरर: {str(e)}"}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
