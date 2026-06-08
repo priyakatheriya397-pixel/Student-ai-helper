@@ -1,12 +1,12 @@
 import os
+import json
+import urllib.request
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
-from groq import Groq  # Groq की ऑफिशियल लाइब्रेरी
 
 app = Flask(__name__)
 CORS(app)
 
-# फ्रंटएंड (HTML + CSS + JavaScript)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="hi">
@@ -77,9 +77,6 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# आपकी API Key से क्लाइंट को शुरू करना
-client = Groq(api_key="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")
-
 @app.route('/')
 def home():
     return render_template_string(HTML_TEMPLATE)
@@ -92,25 +89,33 @@ def chat():
             return jsonify({"reply": "कोई सवाल नहीं मिला।"}), 400
 
         user_message = data['message']
+        
+        # आपकी API Key जिसे हमने बिना किसी अन्य लाइब्रेरी के डायरेक्ट कनेक्ट किया है
+        GROQ_API_KEY = "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"
 
-        # Groq लाइब्रेरी के द्वारा सुरक्षित रिक्वेस्ट भेजना
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful AI assistant who always answers in Hindi language unless specified otherwise. Keep answers engaging and direct."
-                },
-                {
-                    "role": "user",
-                    "content": user_message,
-                }
-            ],
-            model="llama3-8b-8192",
-            timeout=15.0
-        )
-
-        ai_reply = chat_completion.choices[0].message.content
-        return jsonify({"reply": ai_reply.strip()})
+        url = "https://groq.com"
+        
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "llama3-8b-8192",
+            "messages": [
+                {"role": "system", "content": "You are a helpful AI assistant who always answers in Hindi language unless specified otherwise. Keep answers engaging and direct."},
+                {"role": "user", "content": user_message}
+            ]
+        }
+        
+        # शुद्ध पाइथन urllib के द्वारा सीधे HTTP पोस्ट मारना (ताकि रेंडर क्रैश न हो)
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+        
+        with urllib.request.urlopen(req, timeout=15) as response:
+            res_body = response.read().decode('utf-8')
+            result = json.loads(res_body)
+            ai_reply = result['choices'][0]['message']['content']
+            return jsonify({"reply": ai_reply.strip()})
 
     except Exception as e:
         return jsonify({"reply": f"तकनीकी त्रुटि: {str(e)}"}), 500
