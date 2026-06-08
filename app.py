@@ -1,7 +1,7 @@
 import os
-import requests
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
+from groq import Groq  # Groq की ऑफिशियल लाइब्रेरी
 
 app = Flask(__name__)
 CORS(app)
@@ -77,6 +77,9 @@ HTML_TEMPLATE = """
 </html>
 """
 
+# आपकी API Key से क्लाइंट को शुरू करना
+client = Groq(api_key="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")
+
 @app.route('/')
 def home():
     return render_template_string(HTML_TEMPLATE)
@@ -89,33 +92,25 @@ def chat():
             return jsonify({"reply": "कोई सवाल नहीं मिला।"}), 400
 
         user_message = data['message']
-        
-        # आपकी चाबी (API Key) यहाँ जोड़ दी गई है
-        GROQ_API_KEY = "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"
 
-        url = "https://groq.com"
-        
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "model": "llama3-8b-8192",  # सुपर फ़ास्ट मॉडल
-            "messages": [
-                {"role": "system", "content": "You are a helpful AI assistant who always answers in Hindi language unless specified otherwise. Keep answers engaging and direct."},
-                {"role": "user", "content": user_message}
-            ]
-        }
-        
-        response = requests.post(url, json=payload, headers=headers, timeout=15)
-        
-        if response.status_code == 200:
-            result = response.json()
-            ai_reply = result['choices']['message']['content']
-            return jsonify({"reply": ai_reply.strip()})
-        else:
-            return jsonify({"reply": f"एआई सर्वर से त्रुटि आई है। कोड: {response.status_code}।"})
+        # Groq लाइब्रेरी के द्वारा सुरक्षित रिक्वेस्ट भेजना
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful AI assistant who always answers in Hindi language unless specified otherwise. Keep answers engaging and direct."
+                },
+                {
+                    "role": "user",
+                    "content": user_message,
+                }
+            ],
+            model="llama3-8b-8192",
+            timeout=15.0
+        )
+
+        ai_reply = chat_completion.choices[0].message.content
+        return jsonify({"reply": ai_reply.strip()})
 
     except Exception as e:
         return jsonify({"reply": f"तकनीकी त्रुटि: {str(e)}"}), 500
