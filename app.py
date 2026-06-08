@@ -1,91 +1,45 @@
 import os
-from flask import Flask, render_template_string
+import requests
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-
-# सुंदर और रिस्पॉन्सिव चैट डिज़ाइन (इसमें AI सीधे आपके फोन से कनेक्ट होगा)
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .chat-container { width: 90%; max-width: 400px; background: white; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; height: 80vh; }
-        .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
-        .chat-box { padding: 15px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { padding: 10px; border-radius: 5px; max-width: 75%; word-wrap: break-word; font-size: 14px; line-height: 1.4; }
-        .user-msg { background: #007bff; color: white; align-self: flex-end; }
-        .bot-msg { background: #e9ecef; color: #333; align-self: flex-start; }
-        .input-area { display: flex; border-top: 1px solid #ddd; }
-        .input-area input { flex: 1; padding: 15px; border: none; outline: none; font-size: 14px; }
-        .input-area button { padding: 15px; background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="chat-container">
-    <div class="chat-header">मेरा असली AI चैटबॉट</div>
-    <div class="chat-box" id="chatBox">
-        <div class="message bot-msg">नमस्ते! मैं आपका असली AI असिस्टेंट हूँ। अब आप मुझसे दुनिया का कोई भी सवाल पूछ सकते हैं, मैं हर सवाल का तुरंत जवाब दूँगा!</div>
-    </div>
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="यहाँ अपना कोई भी सवाल लिखें...">
-        <button onclick="sendMessage()">भेजें</button>
-    </div>
-</div>
-
-<script>
-    function sendMessage() {
-        let inputField = document.getElementById("userInput");
-        let message = inputField.value.trim();
-        if (!message) return;
-
-        let chatBox = document.getElementById("chatBox");
-        chatBox.innerHTML += `<div class="message user-msg">${message}</div>`;
-        inputField.value = "";
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        // सीधे आपके ब्राउज़र से फ्री AI API को कॉल करना (Render का सर्वर अब बीच में रुकावट नहीं बनेगा)
-        let promptWithInstruction = encodeURIComponent(message + " (कृपया इसका उत्तर हमेशा सरल हिंदी भाषा में विस्तार से दें)");
-        let apiUrl = `https://pollinations.ai{promptWithInstruction}`;
-
-        // बोट टाइपिंग इंडिकेटर दिखाएं
-        let loadingId = "loading_" + Date.now();
-        chatBox.innerHTML += `<div class="message bot-msg" id="${loadingId}">सोच रहा हूँ...</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        fetch(apiUrl)
-        .then(response => {
-            if(response.ok) {
-                return response.text();
-            } else {
-                throw new Error("API Network error");
-            }
-        })
-        .then(text => {
-            // 'सोच रहा हूँ...' को असली जवाब से बदलें
-            document.getElementById(loadingId).innerText = text;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById(loadingId).innerText = "माफ़ कीजिये, रिस्पॉन्स मिलने में समस्या हुई। कृपया दोबारा प्रयास करें।";
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
-    }
-</script>
-</body>
-</html>
-"""
+CORS(app)  # CORS एरर को रोकने के लिए
 
 @app.route('/')
 def home():
-    return render_template_string(HTML_TEMPLATE)
+    return render_template('index.html')
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({"reply": "कोई सवाल नहीं मिला।"}), 400
+
+        user_message = data['message']
+
+        # बिना API Key के काम करने वाला मुफ्त पब्लिक API (DuckDuckGo AI Proxy)
+        # यह Llama 3 मॉडल का उपयोग करता है जो बिल्कुल फ्री है
+        url = "https://fakeopen.com" # या कोई भी ओपन पब्लिक एंडपॉइंट
+        
+        # वैकल्पिक सुरक्षित तरीका: Hugging Face के पब्लिक मॉडल का उपयोग बिना टोकन के
+        # हम यहाँ एक ओपन-सोर्स API एंडपॉइंट का उपयोग कर रहे हैं
+        api_url = "https://pollinations.ai" # यह बिना किसी चाबी के चलने वाला मुफ्त AI है
+        
+        # Pollinations AI पर सीधे रिक्वेस्ट भेज रहे हैं जो बिना की (Key) के तुरंत जवाब देता है
+        response = requests.get(f"{api_url}{user_message}", timeout=30)
+
+        if response.status_code == 200 and response.text:
+            return jsonify({"reply": response.text.strip()})
+        else:
+            return jsonify({"reply": "माफ़ कीजिये, मैं अभी जवाब नहीं दे पा रहा हूँ। कृपया दोबारा कोशिश करें।"})
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"reply": "सर्वर अभी व्यस्त है, कृपया एक बार फिर प्रयास करें।"}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
     
